@@ -11,30 +11,70 @@
       color: #eee;
       margin: 20px;
     }
-    h1 { text-align: center; }
-    .data-section { margin-bottom: 40px; }
+    h1 {
+      text-align: center;
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff;
+    }
+    .data-section {
+      margin-bottom: 40px;
+    }
     table {
       border-collapse: collapse;
       width: 100%;
       background: #222;
+      box-shadow: 0 0 10px #000;
     }
     th, td {
-      border: 1px solid #555;
-      padding: 8px;
+      border: 1px solid #444;
+      padding: 10px;
       text-align: center;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
-    th { background-color: #333; }
+    th {
+      background-color: #333;
+    }
+    tr:hover {
+      background-color: #2a2a2a;
+    }
 
-    /* Neon glow animation */
     .glow {
-      position: relative;
       animation: glowAnim 1s ease-in-out;
     }
 
     @keyframes glowAnim {
       0%   { background-color: rgba(0, 255, 255, 0.3); }
-      50%  { background-color: rgba(0, 255, 255, 0.8); }
+      50%  { background-color: rgba(0, 255, 255, 0.7); }
       100% { background-color: transparent; }
+    }
+
+    .status-on { color: #0f0; font-weight: bold; }
+    .status-off { color: #f00; font-weight: bold; }
+    .status-normal { color: #0af; }
+    .status-penuh { color: #f0f; }
+    .status-trip { background: #a00; color: #fff; padding: 4px 6px; border-radius: 5px; }
+
+    .last-update {
+      font-size: 0.9em;
+      text-align: right;
+      color: #888;
+      margin-top: -10px;
+      margin-bottom: 20px;
+    }
+
+    .loader {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #0ff;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.5); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.5; }
     }
   </style>
 </head>
@@ -42,17 +82,20 @@
   <h1>Dashboard Pompa & Tandon</h1>
 
   <div class="data-section">
-    <h2>📍 Lokasi: Joglo</h2>
+    <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
+    <div class="last-update" id="update-joglo">Terakhir update: -</div>
     <div id="joglo-table">Memuat...</div>
   </div>
 
   <div class="data-section">
-    <h2>📍 Lokasi: Kantin</h2>
+    <h2>📍 Lokasi: Kantin <span class="loader" id="loader-kantin"></span></h2>
+    <div class="last-update" id="update-kantin">Terakhir update: -</div>
     <div id="kantin-table">Memuat...</div>
   </div>
 
   <div class="data-section">
-    <h2>📍 Lokasi: Lantai 6</h2>
+    <h2>📍 Lokasi: Lantai 6 <span class="loader" id="loader-lt6"></span></h2>
+    <div class="last-update" id="update-lt6">Terakhir update: -</div>
     <div id="lt6-table">Memuat...</div>
   </div>
 
@@ -69,11 +112,27 @@
       lt6: []
     };
 
+    function highlightClass(i, cellValue) {
+      if (i === 1) return cellValue.toLowerCase().includes('nyala') ? 'status-on' : 'status-off';
+      if (i === 2) return cellValue.toLowerCase().includes('penuh') ? 'status-penuh' : 'status-normal';
+      if (i === 4) return cellValue.toLowerCase().includes('trip') ? 'status-trip' : '';
+      return '';
+    }
+
+    function updateTime(id) {
+      const now = new Date();
+      const formatted = now.toLocaleTimeString('id-ID');
+      document.getElementById(id).textContent = `Terakhir update: ${formatted}`;
+    }
+
     function fetchCSV(url, elementId, key) {
+      const loaderId = 'loader-' + key;
+      document.getElementById(loaderId).style.display = 'inline-block';
+
       fetch(url)
         .then(res => res.text())
         .then(data => {
-          const rows = data.trim().split('\n').slice(1, 2); // A2-F2
+          const rows = data.trim().split('\n').slice(1, 2);
           const tableHTML = rows.map((row, rowIndex) => {
             const cells = row.split(',');
             return `<tr>${
@@ -81,16 +140,20 @@
                 const oldVal = previousData[key][i];
                 const changed = oldVal !== undefined && oldVal !== cell;
                 previousData[key][i] = cell;
-                return `<td class="${changed ? 'glow' : ''}">${cell}</td>`;
+                const extraClass = highlightClass(i, cell);
+                return `<td class="${changed ? 'glow' : ''} ${extraClass}">${cell}</td>`;
               }).join('')
             }</tr>`;
           }).join('');
-
           document.getElementById(elementId).innerHTML =
             `<table><tr><th>Waktu</th><th>Pompa</th><th>Level</th><th>Suhu</th><th>MCB</th><th>Status</th></tr>${tableHTML}</table>`;
+
+          updateTime('update-' + key);
+          document.getElementById(loaderId).style.display = 'none';
         })
         .catch(err => {
           document.getElementById(elementId).textContent = 'Gagal memuat data.';
+          document.getElementById(loaderId).style.display = 'none';
         });
     }
 
@@ -101,7 +164,7 @@
     }
 
     loadAll();
-    setInterval(loadAll, 10000); // refresh tiap 10 detik
+    setInterval(loadAll, 10000);
   </script>
 </body>
 </html>
