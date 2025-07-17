@@ -1,7 +1,7 @@
 const sheets = {
   joglo: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTf9RrlaFN7h2UMkV_KRWJ0hU53Uwp2kCyjwduvxkvhv7rqJc7j71mXBai3hF3aW6R7EGYNzi5TWQSs/pub?gid=0&single=true&output=csv",
   kantin: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRp3hZufwknJEpOfvD_6YlB_lQEWwcJ-hMgKVfNoV1-jJAKeQB979Acs69cXCKCZVkf01OhwFn8fHlD/pub?gid=0&single=true&output=csv",
-  lt6: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRp3hZufwknJEpOfvD_6YlB_lQEWwcJ-hMgKVfNoV1-jJAKeQB979Acs69cXCKCZVkf01OhwFn8fHlD/pub?gid=0&single=true&output=csv"
+  lt6: "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2q5WkdqPKnd4D37-45O3LSc2KC7nMfRVDWz2crolUEyUOgnhuHxjGgU42BG0q_ddnl8vw_DJ_mcRV/pub?gid=0&single=true&output=csv"
 };
 
 function updateCard(id, data) {
