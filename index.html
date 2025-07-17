@@ -91,14 +91,7 @@
       50% { transform: scale(1.5); opacity: 1; }
       100% { transform: scale(1); opacity: 0.5; }
     }
-    .history-fade {
-      animation: fadeOut 5s forwards;
-    }
-    @keyframes fadeOut {
-      0% { opacity: 1; }
-      80% { opacity: 1; }
-      100% { opacity: 0; height: 0; overflow: hidden; }
-    }
+
     /* Responsif */
     @media (max-width: 768px) {
       h1 {
@@ -126,21 +119,18 @@
     <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
     <div class="last-update" id="update-joglo">Terakhir update: -</div>
     <div id="joglo-table">Memuat...</div>
-    <div id="joglo-history"></div>
   </div>
 
   <div class="data-section">
     <h2>📍 Lokasi: Kantin <span class="loader" id="loader-kantin"></span></h2>
     <div class="last-update" id="update-kantin">Terakhir update: -</div>
     <div id="kantin-table">Memuat...</div>
-    <div id="kantin-history"></div>
   </div>
 
   <div class="data-section">
     <h2>📍 Lokasi: Lantai 6 <span class="loader" id="loader-lt6"></span></h2>
     <div class="last-update" id="update-lt6">Terakhir update: -</div>
     <div id="lt6-table">Memuat...</div>
-    <div id="lt6-history"></div>
   </div>
 
   <script>
@@ -150,63 +140,52 @@
       lt6: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2q5WkdqPKnd4D37-45O3LSc2KC7nMfRVDWz2crolUEyUOgnhuHxjGgU42BG0q_ddnl8vw_DJ_mcRV/pub?gid=0&single=true&output=csv',
     };
 
-    const previousData = { joglo: [], kantin: [], lt6: [] };
+    const previousData = {
+      joglo: [],
+      kantin: [],
+      lt6: []
+    };
 
-    function highlightClass(i, val) {
-      if (i === 1) return val.toLowerCase().includes('nyala') ? 'status-on' : 'status-off';
-      if (i === 2) return val.toLowerCase().includes('penuh') ? 'status-penuh' : 'status-normal';
-      if (i === 4) return val.toLowerCase().includes('trip') ? 'status-trip' : '';
+    function highlightClass(i, cellValue) {
+      if (i === 1) return cellValue.toLowerCase().includes('nyala') ? 'status-on' : 'status-off';
+      if (i === 2) return cellValue.toLowerCase().includes('penuh') ? 'status-penuh' : 'status-normal';
+      if (i === 4) return cellValue.toLowerCase().includes('trip') ? 'status-trip' : '';
       return '';
     }
 
     function updateTime(id) {
       const now = new Date();
-      document.getElementById(id).textContent = `Terakhir update: ${now.toLocaleTimeString('id-ID')}`;
+      const formatted = now.toLocaleTimeString('id-ID');
+      document.getElementById(id).textContent = `Terakhir update: ${formatted}`;
     }
 
-    function showHistoryRow(key, oldData) {
-      const container = document.getElementById(`${key}-history`);
-      container.innerHTML = `
-        <table class="history-fade">
-          <tr><th colspan="6">Sebelumnya</th></tr>
-          <tr><th>Waktu</th><th>Pompa</th><th>Level</th><th>Suhu</th><th>MCB</th><th>Status</th></tr>
-          <tr>${oldData.map((cell, i) => `<td>${cell}</td>`).join('')}</tr>
-        </table>
-      `;
-    }
-
-    function fetchCSV(url, targetId, key) {
-      const loader = document.getElementById('loader-' + key);
-      loader.style.display = 'inline-block';
+    function fetchCSV(url, elementId, key) {
+      const loaderId = 'loader-' + key;
+      document.getElementById(loaderId).style.display = 'inline-block';
 
       fetch(url)
         .then(res => res.text())
-        .then(csv => {
-          const row = csv.trim().split('\n')[1];
-          const cells = row.split(',');
-          const prev = previousData[key];
-          const changed = prev.length && cells.some((cell, i) => cell !== prev[i]);
+        .then(data => {
+          const rows = data.trim().split('\n').slice(1, 2);
+          const tableHTML = rows.map(row => {
+            const cells = row.split(',');
+            return `<tr>${cells.map((cell, i) => {
+              const oldVal = previousData[key][i];
+              const changed = oldVal !== undefined && oldVal !== cell;
+              previousData[key][i] = cell;
+              const extraClass = highlightClass(i, cell);
+              return `<td class="${changed ? 'glow' : ''} ${extraClass}">${cell}</td>`;
+            }).join('')}</tr>`;
+          }).join('');
+          document.getElementById(elementId).innerHTML =
+            `<table><tr><th>Waktu</th><th>Pompa</th><th>Level</th><th>Suhu</th><th>MCB</th><th>Status</th></tr>${tableHTML}</table>`;
 
-          if (changed) showHistoryRow(key, prev);
-          previousData[key] = cells;
-
-          const table = `
-            <table>
-              <tr><th>Waktu</th><th>Pompa</th><th>Level</th><th>Suhu</th><th>MCB</th><th>Status</th></tr>
-              <tr>${cells.map((cell, i) => {
-                const cls = changed ? 'glow' : '';
-                const c = highlightClass(i, cell);
-                return `<td class="${cls} ${c}">${cell}</td>`;
-              }).join('')}</tr>
-            </table>
-          `;
-          document.getElementById(targetId).innerHTML = table;
           updateTime('update-' + key);
-          loader.style.display = 'none';
+          document.getElementById(loaderId).style.display = 'none';
         })
-        .catch(() => {
-          document.getElementById(targetId).textContent = 'Gagal memuat data.';
-          loader.style.display = 'none';
+        .catch(err => {
+          document.getElementById(elementId).textContent = 'Gagal memuat data.';
+          document.getElementById(loaderId).style.display = 'none';
         });
     }
 
