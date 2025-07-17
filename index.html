@@ -1,26 +1,67 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard Tandon & Pompa</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Pompa & Tandon</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; margin: 20px; }
+    h1 { text-align: center; }
+    .data-section { margin-bottom: 40px; }
+    table { border-collapse: collapse; width: 100%; background: #222; }
+    th, td { border: 1px solid #555; padding: 8px; text-align: center; }
+    th { background-color: #333; }
+  </style>
 </head>
 <body>
-  <h1>Dashboard Monitoring</h1>
-  <div id="dashboard-container">
-    <div class="card" id="joglo-card">
-      <h2>Joglo</h2>
-      <div class="status" id="joglo-status">Loading...</div>
-    </div>
-    <div class="card" id="kantin-card">
-      <h2>Kantin</h2>
-      <div class="status" id="kantin-status">Loading...</div>
-    </div>
-    <div class="card" id="lt6-card">
-      <h2>Lantai 6</h2>
-      <div class="status" id="lt6-status">Loading...</div>
-    </div>
+  <h1>Dashboard Pompa & Tandon</h1>
+
+  <div class="data-section">
+    <h2>📍 Lokasi: Joglo</h2>
+    <div id="joglo-table">Memuat...</div>
   </div>
-  <script src="script.js"></script>
+
+  <div class="data-section">
+    <h2>📍 Lokasi: Kantin</h2>
+    <div id="kantin-table">Memuat...</div>
+  </div>
+
+  <div class="data-section">
+    <h2>📍 Lokasi: Lantai 6</h2>
+    <div id="lt6-table">Memuat...</div>
+  </div>
+
+  <script>
+    const sources = {
+      joglo: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTf9RrlaFN7h2UMkV_KRWJ0hU53Uwp2kCyjwduvxkvhv7rqJc7j71mXBai3hF3aW6R7EGYNzi5TWQSs/pub?gid=0&single=true&output=csv',
+      kantin: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRp3hZufwknJEpOfvD_6YlB_lQEWwcJ-hMgKVfNoV1-jJAKeQB979Acs69cXCKCZVkf01OhwFn8fHlD/pub?gid=0&single=true&output=csv',
+      lt6: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2q5WkdqPKnd4D37-45O3LSc2KC7nMfRVDWz2crolUEyUOgnhuHxjGgU42BG0q_ddnl8vw_DJ_mcRV/pub?gid=0&single=true&output=csv',
+    };
+
+    function fetchCSV(url, elementId) {
+      fetch(url)
+        .then(res => res.text())
+        .then(data => {
+          const rows = data.split('\n').slice(1, 2); // hanya ambil A2-F2
+          const tableHTML = rows.map(row => {
+            const cells = row.split(',');
+            return `<tr>${cells.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+          }).join('');
+          document.getElementById(elementId).innerHTML = `<table><tr><th>Waktu</th><th>Pompa</th><th>Level</th><th>Suhu</th><th>MCB</th><th>Status</th></tr>${tableHTML}</table>`;
+        })
+        .catch(err => {
+          document.getElementById(elementId).textContent = 'Gagal memuat data.';
+        });
+    }
+
+    function loadAll() {
+      fetchCSV(sources.joglo, 'joglo-table');
+      fetchCSV(sources.kantin, 'kantin-table');
+      fetchCSV(sources.lt6, 'lt6-table');
+    }
+
+    loadAll();
+    setInterval(loadAll, 5000); // refresh tiap 10 detik
+  </script>
 </body>
 </html>
