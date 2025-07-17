@@ -3,134 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Pompa & Tandon</title>
+  <title>Grafik Mini Tandon</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
     body {
       font-family: Arial, sans-serif;
       background: #111;
       color: #eee;
-      margin: 10px;
-      padding: 0;
+      padding: 20px;
+      text-align: center;
     }
     h1 {
-      text-align: center;
-      color: #eee;
+      color: #0ff;
       text-shadow: 0 0 10px #0ff;
-      font-size: 1.8em;
-      margin-bottom: 20px;
     }
-    .data-section {
-      margin-bottom: 30px;
-      padding: 10px;
+    .grafik-section {
+      margin-bottom: 40px;
       background: #1a1a1a;
+      padding: 15px;
       border-radius: 10px;
       box-shadow: 0 0 10px #000;
     }
-    h2 {
-      font-size: 1.2em;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      background: #222;
-      font-size: 0.95em;
-    }
-    th, td {
+    canvas {
+      background: #000;
       border: 1px solid #444;
-      padding: 10px;
-      text-align: center;
-      word-wrap: break-word;
+      margin-top: 10px;
     }
-    th {
-      background-color: #333;
-    }
-    tr:hover {
-      background-color: #2a2a2a;
-    }
-    .glow {
-      animation: glowAnim 1s ease-in-out;
-    }
-    @keyframes glowAnim {
-      0%   { background-color: rgba(0, 255, 255, 0.3); }
-      50%  { background-color: rgba(0, 255, 255, 0.7); }
-      100% { background-color: transparent; }
-    }
-    .status-on { color: #0f0; font-weight: bold; }
-    .status-off { color: #f00; font-weight: bold; }
-    .status-normal { color: #0af; }
-    .status-penuh { color: #f0f; }
-    .status-trip {
-      background: #a00;
-      color: #fff;
-      padding: 4px 6px;
-      border-radius: 5px;
-    }
-    .last-update {
+    .update-time {
       font-size: 0.8em;
-      text-align: right;
       color: #aaa;
       margin-top: 5px;
-      margin-bottom: 10px;
-    }
-    .loader {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #0ff;
-      animation: pulse 1s infinite;
-      margin-left: 8px;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 0.5; }
-      50% { transform: scale(1.5); opacity: 1; }
-      100% { transform: scale(1); opacity: 0.5; }
-    }
-
-    /* Responsif */
-    @media (max-width: 768px) {
-      h1 {
-        font-size: 1.5em;
-      }
-      table, th, td {
-        font-size: 0.85em;
-      }
-      .data-section {
-        padding: 5px;
-      }
-      h2 {
-        font-size: 1em;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
-      }
     }
   </style>
 </head>
 <body>
-  <h1>Dashboard Pompa & Tandon</h1>
+  <h1>Grafik Mini Level Tandon</h1>
 
-  <div class="data-section">
-    <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
-    <div class="last-update" id="update-joglo">Terakhir update: -</div>
-    <div id="joglo-table">Memuat...</div>
+  <div class="grafik-section">
+    <h2>📍 Joglo</h2>
+    <canvas id="chart-joglo" width="300" height="80"></canvas>
+    <div class="update-time" id="update-joglo">Terakhir update: -</div>
   </div>
 
-  <div class="data-section">
-    <h2>📍 Lokasi: Kantin <span class="loader" id="loader-kantin"></span></h2>
-    <div class="last-update" id="update-kantin">Terakhir update: -</div>
-    <div id="kantin-table">Memuat...</div>
+  <div class="grafik-section">
+    <h2>📍 Kantin</h2>
+    <canvas id="chart-kantin" width="300" height="80"></canvas>
+    <div class="update-time" id="update-kantin">Terakhir update: -</div>
   </div>
 
-  <div class="data-section">
-    <h2>📍 Lokasi: Lantai 6 <span class="loader" id="loader-lt6"></span></h2>
-    <div class="last-update" id="update-lt6">Terakhir update: -</div>
-    <div id="lt6-table">Memuat...</div>
+  <div class="grafik-section">
+    <h2>📍 Lantai 6</h2>
+    <canvas id="chart-lt6" width="300" height="80"></canvas>
+    <div class="update-time" id="update-lt6">Terakhir update: -</div>
   </div>
 
   <script>
@@ -140,59 +63,63 @@
       lt6: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2q5WkdqPKnd4D37-45O3LSc2KC7nMfRVDWz2crolUEyUOgnhuHxjGgU42BG0q_ddnl8vw_DJ_mcRV/pub?gid=0&single=true&output=csv',
     };
 
-    const previousData = {
-      joglo: [],
-      kantin: [],
-      lt6: []
-    };
-
-    function highlightClass(i, cellValue) {
-      if (i === 1) return cellValue.toLowerCase().includes('nyala') ? 'status-on' : 'status-off';
-      if (i === 2) return cellValue.toLowerCase().includes('penuh') ? 'status-penuh' : 'status-normal';
-      if (i === 4) return cellValue.toLowerCase().includes('trip') ? 'status-trip' : '';
-      return '';
-    }
+    const graphData = { joglo: [], kantin: [], lt6: [] };
 
     function updateTime(id) {
       const now = new Date();
-      const formatted = now.toLocaleTimeString('id-ID');
-      document.getElementById(id).textContent = `Terakhir update: ${formatted}`;
+      document.getElementById(id).textContent = `Terakhir update: ${now.toLocaleTimeString('id-ID')}`;
     }
 
-    function fetchCSV(url, elementId, key) {
-      const loaderId = 'loader-' + key;
-      document.getElementById(loaderId).style.display = 'inline-block';
+    function updateGraph(canvasId, key) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      const dataArr = graphData[key];
 
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      ctx.strokeStyle = '#0ff';
+      ctx.lineWidth = 2;
+
+      const stepX = canvas.width / 9;
+      const maxY = Math.max(...dataArr);
+      const minY = Math.min(...dataArr);
+      const rangeY = maxY - minY || 1;
+
+      dataArr.forEach((val, i) => {
+        const x = i * stepX;
+        const y = canvas.height - ((val - minY) / rangeY) * canvas.height;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+
+      ctx.stroke();
+    }
+
+    function fetchLevelOnly(url, key, canvasId, updateId) {
       fetch(url)
         .then(res => res.text())
         .then(data => {
-          const rows = data.trim().split('\n').slice(1, 2);
-          const tableHTML = rows.map(row => {
-            const cells = row.split(',');
-            return `<tr>${cells.map((cell, i) => {
-              const oldVal = previousData[key][i];
-              const changed = oldVal !== undefined && oldVal !== cell;
-              previousData[key][i] = cell;
-              const extraClass = highlightClass(i, cell);
-              return `<td class="${changed ? 'glow' : ''} ${extraClass}">${cell}</td>`;
-            }).join('')}</tr>`;
-          }).join('');
-          document.getElementById(elementId).innerHTML =
-            `<table><tr><th>Waktu</th><th>Pompa</th><th>Level</th><th>Suhu</th><th>MCB</th><th>Status</th></tr>${tableHTML}</table>`;
-
-          updateTime('update-' + key);
-          document.getElementById(loaderId).style.display = 'none';
+          const lines = data.trim().split('\n');
+          if (lines.length < 2) return;
+          const latest = lines[1].split(','); // ambil baris terbaru
+          const levelText = latest[2] || '';   // kolom ke-3 = level
+          const levelValue = parseFloat(levelText.replace(/[^\d.]/g, ''));
+          if (!isNaN(levelValue)) {
+            graphData[key].push(levelValue);
+            if (graphData[key].length > 10) graphData[key].shift();
+            updateGraph(canvasId, key);
+            updateTime(updateId);
+          }
         })
         .catch(err => {
-          document.getElementById(elementId).textContent = 'Gagal memuat data.';
-          document.getElementById(loaderId).style.display = 'none';
+          console.warn(`Gagal fetch data untuk ${key}:`, err);
         });
     }
 
     function loadAll() {
-      fetchCSV(sources.joglo, 'joglo-table', 'joglo');
-      fetchCSV(sources.kantin, 'kantin-table', 'kantin');
-      fetchCSV(sources.lt6, 'lt6-table', 'lt6');
+      fetchLevelOnly(sources.joglo, 'joglo', 'chart-joglo', 'update-joglo');
+      fetchLevelOnly(sources.kantin, 'kantin', 'chart-kantin', 'update-kantin');
+      fetchLevelOnly(sources.lt6, 'lt6', 'chart-lt6', 'update-lt6');
     }
 
     loadAll();
