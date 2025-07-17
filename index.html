@@ -5,31 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard Pompa & Tandon</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: Arial, sans-serif;
       background: #111;
       color: #eee;
-      margin: 20px;
+      margin: 10px;
+      padding: 0;
     }
     h1 {
       text-align: center;
       color: #eee;
       text-shadow: 0 0 10px #0ff;
+      font-size: 1.8em;
+      margin-bottom: 20px;
     }
     .data-section {
-      margin-bottom: 40px;
+      margin-bottom: 30px;
+      padding: 10px;
+      background: #1a1a1a;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
+    }
+    h2 {
+      font-size: 1.2em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
     table {
       border-collapse: collapse;
       width: 100%;
       background: #222;
-      box-shadow: 0 0 10px #000;
+      font-size: 0.95em;
     }
     th, td {
       border: 1px solid #444;
       padding: 10px;
       text-align: center;
-      transition: background-color 0.3s ease, color 0.3s ease;
+      word-wrap: break-word;
     }
     th {
       background-color: #333;
@@ -37,44 +53,62 @@
     tr:hover {
       background-color: #2a2a2a;
     }
-
     .glow {
       animation: glowAnim 1s ease-in-out;
     }
-
     @keyframes glowAnim {
       0%   { background-color: rgba(0, 255, 255, 0.3); }
       50%  { background-color: rgba(0, 255, 255, 0.7); }
       100% { background-color: transparent; }
     }
-
     .status-on { color: #0f0; font-weight: bold; }
     .status-off { color: #f00; font-weight: bold; }
     .status-normal { color: #0af; }
     .status-penuh { color: #f0f; }
-    .status-trip { background: #a00; color: #fff; padding: 4px 6px; border-radius: 5px; }
-
-    .last-update {
-      font-size: 0.9em;
-      text-align: right;
-      color: #888;
-      margin-top: -10px;
-      margin-bottom: 20px;
+    .status-trip {
+      background: #a00;
+      color: #fff;
+      padding: 4px 6px;
+      border-radius: 5px;
     }
-
+    .last-update {
+      font-size: 0.8em;
+      text-align: right;
+      color: #aaa;
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
     .loader {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: #0ff;
       animation: pulse 1s infinite;
+      margin-left: 8px;
     }
-
     @keyframes pulse {
       0% { transform: scale(1); opacity: 0.5; }
       50% { transform: scale(1.5); opacity: 1; }
       100% { transform: scale(1); opacity: 0.5; }
+    }
+
+    /* Responsif */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.5em;
+      }
+      table, th, td {
+        font-size: 0.85em;
+      }
+      .data-section {
+        padding: 5px;
+      }
+      h2 {
+        font-size: 1em;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+      }
     }
   </style>
 </head>
@@ -133,17 +167,15 @@
         .then(res => res.text())
         .then(data => {
           const rows = data.trim().split('\n').slice(1, 2);
-          const tableHTML = rows.map((row, rowIndex) => {
+          const tableHTML = rows.map(row => {
             const cells = row.split(',');
-            return `<tr>${
-              cells.map((cell, i) => {
-                const oldVal = previousData[key][i];
-                const changed = oldVal !== undefined && oldVal !== cell;
-                previousData[key][i] = cell;
-                const extraClass = highlightClass(i, cell);
-                return `<td class="${changed ? 'glow' : ''} ${extraClass}">${cell}</td>`;
-              }).join('')
-            }</tr>`;
+            return `<tr>${cells.map((cell, i) => {
+              const oldVal = previousData[key][i];
+              const changed = oldVal !== undefined && oldVal !== cell;
+              previousData[key][i] = cell;
+              const extraClass = highlightClass(i, cell);
+              return `<td class="${changed ? 'glow' : ''} ${extraClass}">${cell}</td>`;
+            }).join('')}</tr>`;
           }).join('');
           document.getElementById(elementId).innerHTML =
             `<table><tr><th>Waktu</th><th>Pompa</th><th>Level</th><th>Suhu</th><th>MCB</th><th>Status</th></tr>${tableHTML}</table>`;
