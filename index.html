@@ -5,116 +5,106 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard Pompa & Tandon</title>
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #0d0d0d;
+      font-family: Arial, sans-serif;
+      background: #111;
       color: #eee;
-      padding: 20px;
+      margin: 10px;
+      padding: 0;
     }
     h1 {
       text-align: center;
-      font-size: 2em;
-      color: #0ff;
+      color: #eee;
       text-shadow: 0 0 10px #0ff;
-      margin-bottom: 30px;
+      font-size: 1.8em;
+      margin-bottom: 20px;
     }
-
     .data-section {
       margin-bottom: 30px;
-      padding: 20px;
+      padding: 10px;
       background: #1a1a1a;
-      border-radius: 15px;
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-      transition: all 0.3s ease;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
     }
-
     h2 {
       font-size: 1.2em;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      color: #0ff;
-      margin-bottom: 10px;
     }
-
-    .icon {
-      width: 24px;
-      height: 24px;
-      margin-right: 10px;
-      vertical-align: middle;
-      fill: #0ff;
-    }
-
     table {
-      width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      width: 100%;
+      background: #222;
       font-size: 0.95em;
     }
-
     th, td {
-      border: 1px solid #333;
+      border: 1px solid #444;
       padding: 10px;
       text-align: center;
+      word-wrap: break-word;
     }
-
     th {
-      background: #111;
-      color: #0ff;
+      background-color: #333;
     }
-
     tr:hover {
-      background: #222;
+      background-color: #2a2a2a;
     }
-
     .glow {
-      animation: glowAnim 1.5s ease-in-out;
+      animation: glowAnim 1s ease-in-out;
     }
-
     @keyframes glowAnim {
-      0% { background-color: rgba(0, 255, 255, 0.3); }
-      50% { background-color: rgba(0, 255, 255, 0.8); }
+      0%   { background-color: rgba(0, 255, 255, 0.3); }
+      50%  { background-color: rgba(0, 255, 255, 0.7); }
       100% { background-color: transparent; }
     }
-
     .status-on { color: #0f0; font-weight: bold; }
     .status-off { color: #f00; font-weight: bold; }
     .status-normal { color: #0af; }
     .status-penuh { color: #f0f; }
     .status-trip {
-      background: #c00;
+      background: #a00;
       color: #fff;
-      padding: 4px 8px;
-      border-radius: 6px;
+      padding: 4px 6px;
+      border-radius: 5px;
     }
-
     .last-update {
       font-size: 0.8em;
-      color: #aaa;
-      margin-top: 8px;
       text-align: right;
+      color: #aaa;
+      margin-top: 5px;
+      margin-bottom: 10px;
     }
-
     .loader {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: #0ff;
       animation: pulse 1s infinite;
+      margin-left: 8px;
     }
-
     @keyframes pulse {
       0% { transform: scale(1); opacity: 0.5; }
-      50% { transform: scale(1.4); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 1; }
       100% { transform: scale(1); opacity: 0.5; }
     }
 
+    /* Responsif */
     @media (max-width: 768px) {
-      h1 { font-size: 1.5em; }
-      table, th, td { font-size: 0.85em; }
+      h1 {
+        font-size: 1.5em;
+      }
+      table, th, td {
+        font-size: 0.85em;
+      }
+      .data-section {
+        padding: 5px;
+      }
       h2 {
+        font-size: 1em;
         flex-direction: column;
         align-items: flex-start;
         gap: 5px;
@@ -126,19 +116,19 @@
   <h1>Dashboard Pompa & Tandon</h1>
 
   <div class="data-section">
-    <h2><span>📍 Joglo</span> <div class="loader" id="loader-joglo"></div></h2>
+    <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
     <div class="last-update" id="update-joglo">Terakhir update: -</div>
     <div id="joglo-table">Memuat...</div>
   </div>
 
   <div class="data-section">
-    <h2><span>📍 Kantin</span> <div class="loader" id="loader-kantin"></div></h2>
+    <h2>📍 Lokasi: Kantin <span class="loader" id="loader-kantin"></span></h2>
     <div class="last-update" id="update-kantin">Terakhir update: -</div>
     <div id="kantin-table">Memuat...</div>
   </div>
 
   <div class="data-section">
-    <h2><span>📍 Lantai 6</span> <div class="loader" id="loader-lt6"></div></h2>
+    <h2>📍 Lokasi: Lantai 6 <span class="loader" id="loader-lt6"></span></h2>
     <div class="last-update" id="update-lt6">Terakhir update: -</div>
     <div id="lt6-table">Memuat...</div>
   </div>
@@ -147,23 +137,26 @@
     const sources = {
       joglo: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTf9RrlaFN7h2UMkV_KRWJ0hU53Uwp2kCyjwduvxkvhv7rqJc7j71mXBai3hF3aW6R7EGYNzi5TWQSs/pub?gid=0&single=true&output=csv',
       kantin: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRp3hZufwknJEpOfvD_6YlB_lQEWwcJ-hMgKVfNoV1-jJAKeQB979Acs69cXCKCZVkf01OhwFn8fHlD/pub?gid=0&single=true&output=csv',
-      lt6: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2q5WkdqPKnd4D37-45O3LSc2KC7nMfRVDWz2crolUEyUOgnhuHxjGgU42BG0q_ddnl8vw_DJ_mcRV/pub?gid=0&single=true&output=csv'
+      lt6: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2q5WkdqPKnd4D37-45O3LSc2KC7nMfRVDWz2crolUEyUOgnhuHxjGgU42BG0q_ddnl8vw_DJ_mcRV/pub?gid=0&single=true&output=csv',
     };
 
     const previousData = {
-      joglo: [], kantin: [], lt6: []
+      joglo: [],
+      kantin: [],
+      lt6: []
     };
 
-    function highlightClass(i, val) {
-      if (i === 1) return val.toLowerCase().includes('nyala') ? 'status-on' : 'status-off';
-      if (i === 2) return val.toLowerCase().includes('penuh') ? 'status-penuh' : 'status-normal';
-      if (i === 4) return val.toLowerCase().includes('trip') ? 'status-trip' : '';
+    function highlightClass(i, cellValue) {
+      if (i === 1) return cellValue.toLowerCase().includes('nyala') ? 'status-on' : 'status-off';
+      if (i === 2) return cellValue.toLowerCase().includes('penuh') ? 'status-penuh' : 'status-normal';
+      if (i === 4) return cellValue.toLowerCase().includes('trip') ? 'status-trip' : '';
       return '';
     }
 
     function updateTime(id) {
       const now = new Date();
-      document.getElementById(id).textContent = 'Terakhir update: ' + now.toLocaleTimeString('id-ID');
+      const formatted = now.toLocaleTimeString('id-ID');
+      document.getElementById(id).textContent = `Terakhir update: ${formatted}`;
     }
 
     function fetchCSV(url, elementId, key) {
@@ -180,17 +173,17 @@
               const oldVal = previousData[key][i];
               const changed = oldVal !== undefined && oldVal !== cell;
               previousData[key][i] = cell;
-              const className = highlightClass(i, cell);
-              return `<td class="${changed ? 'glow' : ''} ${className}">${cell}</td>`;
+              const extraClass = highlightClass(i, cell);
+              return `<td class="${changed ? 'glow' : ''} ${extraClass}">${cell}</td>`;
             }).join('')}</tr>`;
           }).join('');
           document.getElementById(elementId).innerHTML =
             `<table><tr><th>Waktu</th><th>Pompa</th><th>Level</th><th>Suhu</th><th>MCB</th><th>Status</th></tr>${tableHTML}</table>`;
-          
+
           updateTime('update-' + key);
           document.getElementById(loaderId).style.display = 'none';
         })
-        .catch(() => {
+        .catch(err => {
           document.getElementById(elementId).textContent = 'Gagal memuat data.';
           document.getElementById(loaderId).style.display = 'none';
         });
