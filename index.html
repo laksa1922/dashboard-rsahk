@@ -40,7 +40,6 @@
       width: 100%;
       background: #222;
       font-size: 0.95em;
-      margin-bottom: 10px;
     }
     th, td {
       border: 1px solid #444;
@@ -92,19 +91,13 @@
       50% { transform: scale(1.5); opacity: 1; }
       100% { transform: scale(1); opacity: 0.5; }
     }
-    /* Tabel history tambahan */
-    .history-table {
-      font-size: 0.85em;
-      opacity: 0.85;
+    .history-fade {
+      animation: fadeOut 5s forwards;
     }
-    .history-row {
-      animation: fadeInOut 20s forwards;
-    }
-    @keyframes fadeInOut {
-      0% { opacity: 0; }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { opacity: 0; height: 0; display: none; }
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { opacity: 0; height: 0; overflow: hidden; }
     }
     /* Responsif */
     @media (max-width: 768px) {
@@ -133,21 +126,21 @@
     <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
     <div class="last-update" id="update-joglo">Terakhir update: -</div>
     <div id="joglo-table">Memuat...</div>
-    <div id="joglo-history" class="history-table"></div>
+    <div id="joglo-history"></div>
   </div>
 
   <div class="data-section">
     <h2>📍 Lokasi: Kantin <span class="loader" id="loader-kantin"></span></h2>
     <div class="last-update" id="update-kantin">Terakhir update: -</div>
     <div id="kantin-table">Memuat...</div>
-    <div id="kantin-history" class="history-table"></div>
+    <div id="kantin-history"></div>
   </div>
 
   <div class="data-section">
     <h2>📍 Lokasi: Lantai 6 <span class="loader" id="loader-lt6"></span></h2>
     <div class="last-update" id="update-lt6">Terakhir update: -</div>
     <div id="lt6-table">Memuat...</div>
-    <div id="lt6-history" class="history-table"></div>
+    <div id="lt6-history"></div>
   </div>
 
   <script>
@@ -158,7 +151,6 @@
     };
 
     const previousData = { joglo: [], kantin: [], lt6: [] };
-    const historyList = { joglo: [], kantin: [], lt6: [] };
 
     function highlightClass(i, val) {
       if (i === 1) return val.toLowerCase().includes('nyala') ? 'status-on' : 'status-off';
@@ -172,23 +164,15 @@
       document.getElementById(id).textContent = `Terakhir update: ${now.toLocaleTimeString('id-ID')}`;
     }
 
-    function addToHistory(key, cells) {
-      const rowHTML = `<tr class="history-row">${cells.map((cell, i) => {
-        const c = highlightClass(i, cell);
-        return `<td class="${c}">${cell}</td>`;
-      }).join('')}</tr>`;
-
-      historyList[key].unshift(rowHTML);
-      if (historyList[key].length > 5) historyList[key].pop();
-
-      const content = `
-        <table>
-          <tr><th colspan="6">Histori Data Sebelumnya</th></tr>
+    function showHistoryRow(key, oldData) {
+      const container = document.getElementById(`${key}-history`);
+      container.innerHTML = `
+        <table class="history-fade">
+          <tr><th colspan="6">Sebelumnya</th></tr>
           <tr><th>Waktu</th><th>Pompa</th><th>Level</th><th>Suhu</th><th>MCB</th><th>Status</th></tr>
-          ${historyList[key].join('')}
+          <tr>${oldData.map((cell, i) => `<td>${cell}</td>`).join('')}</tr>
         </table>
       `;
-      document.getElementById(`${key}-history`).innerHTML = content;
     }
 
     function fetchCSV(url, targetId, key) {
@@ -198,20 +182,21 @@
       fetch(url)
         .then(res => res.text())
         .then(csv => {
-          const row = csv.trim().split('\n')[1]; // baris data terbaru
+          const row = csv.trim().split('\n')[1];
           const cells = row.split(',');
           const prev = previousData[key];
           const changed = prev.length && cells.some((cell, i) => cell !== prev[i]);
 
+          if (changed) showHistoryRow(key, prev);
           previousData[key] = cells;
-          if (changed) addToHistory(key, cells);
 
           const table = `
             <table>
               <tr><th>Waktu</th><th>Pompa</th><th>Level</th><th>Suhu</th><th>MCB</th><th>Status</th></tr>
               <tr>${cells.map((cell, i) => {
+                const cls = changed ? 'glow' : '';
                 const c = highlightClass(i, cell);
-                return `<td class="${c}">${cell}</td>`;
+                return `<td class="${cls} ${c}">${cell}</td>`;
               }).join('')}</tr>
             </table>
           `;
@@ -232,7 +217,7 @@
     }
 
     loadAll();
-    setInterval(loadAll, 10000); // refresh tiap 10 detik
+    setInterval(loadAll, 10000);
   </script>
 </body>
 </html>
