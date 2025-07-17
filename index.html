@@ -5,62 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard Pompa & Tandon</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       background: #111;
       color: #eee;
       margin: 10px;
-      padding: 0;
     }
     h1 {
       text-align: center;
-      color: #eee;
+      color: #0ff;
       text-shadow: 0 0 10px #0ff;
-      font-size: 1.8em;
+      font-size: 2em;
       margin-bottom: 20px;
     }
     .data-section {
-      margin-bottom: 30px;
-      padding: 10px;
       background: #1a1a1a;
+      margin-bottom: 30px;
       border-radius: 10px;
       box-shadow: 0 0 10px #000;
+      padding: 15px;
     }
     h2 {
-      font-size: 1.2em;
+      font-size: 1.1em;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .last-update {
+      font-size: 0.85em;
+      color: #aaa;
+      margin-bottom: 10px;
     }
     table {
-      border-collapse: collapse;
       width: 100%;
-      background: #222;
+      border-collapse: collapse;
       font-size: 0.95em;
+      background: #222;
     }
     th, td {
       border: 1px solid #444;
-      padding: 10px;
+      padding: 8px;
       text-align: center;
-      word-wrap: break-word;
     }
     th {
       background-color: #333;
     }
-    tr:hover {
-      background-color: #2a2a2a;
-    }
-    .glow {
-      animation: glowAnim 1s ease-in-out;
-    }
-    @keyframes glowAnim {
-      0%   { background-color: rgba(0, 255, 255, 0.3); }
-      50%  { background-color: rgba(0, 255, 255, 0.7); }
-      100% { background-color: transparent; }
-    }
+    tr:hover { background: #2a2a2a; }
+
+    /* Status coloring */
     .status-on { color: #0f0; font-weight: bold; }
     .status-off { color: #f00; font-weight: bold; }
     .status-normal { color: #0af; }
@@ -71,20 +65,25 @@
       padding: 4px 6px;
       border-radius: 5px;
     }
-    .last-update {
-      font-size: 0.8em;
-      text-align: right;
-      color: #aaa;
-      margin-top: 5px;
-      margin-bottom: 10px;
+
+    /* Animasi perubahan */
+    .glow {
+      animation: glowAnim 1.5s ease-in-out;
     }
+    @keyframes glowAnim {
+      0%   { background-color: rgba(0, 255, 255, 0.2); }
+      50%  { background-color: rgba(0, 255, 255, 0.6); }
+      100% { background-color: transparent; }
+    }
+
+    /* Loader animasi */
     .loader {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
+      width: 10px;
+      height: 10px;
       background: #0ff;
+      border-radius: 50%;
       animation: pulse 1s infinite;
-      margin-left: 8px;
+      margin-left: 10px;
     }
     @keyframes pulse {
       0% { transform: scale(1); opacity: 0.5; }
@@ -92,45 +91,33 @@
       100% { transform: scale(1); opacity: 0.5; }
     }
 
-    /* Responsif */
+    /* Mobile friendly */
     @media (max-width: 768px) {
-      h1 {
-        font-size: 1.5em;
-      }
-      table, th, td {
-        font-size: 0.85em;
-      }
-      .data-section {
-        padding: 5px;
-      }
-      h2 {
-        font-size: 1em;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
-      }
+      h1 { font-size: 1.5em; }
+      table, th, td { font-size: 0.8em; }
     }
   </style>
 </head>
 <body>
   <h1>Dashboard Pompa & Tandon</h1>
 
-  <div class="data-section">
+  <!-- Seksi Lokasi -->
+  <div class="data-section" id="section-joglo">
     <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
     <div class="last-update" id="update-joglo">Terakhir update: -</div>
-    <div id="joglo-table">Memuat...</div>
+    <div id="table-joglo">Memuat data...</div>
   </div>
 
-  <div class="data-section">
+  <div class="data-section" id="section-kantin">
     <h2>📍 Lokasi: Kantin <span class="loader" id="loader-kantin"></span></h2>
     <div class="last-update" id="update-kantin">Terakhir update: -</div>
-    <div id="kantin-table">Memuat...</div>
+    <div id="table-kantin">Memuat data...</div>
   </div>
 
-  <div class="data-section">
+  <div class="data-section" id="section-lt6">
     <h2>📍 Lokasi: Lantai 6 <span class="loader" id="loader-lt6"></span></h2>
     <div class="last-update" id="update-lt6">Terakhir update: -</div>
-    <div id="lt6-table">Memuat...</div>
+    <div id="table-lt6">Memuat data...</div>
   </div>
 
   <script>
@@ -146,57 +133,64 @@
       lt6: []
     };
 
-    function highlightClass(i, cellValue) {
-      if (i === 1) return cellValue.toLowerCase().includes('nyala') ? 'status-on' : 'status-off';
-      if (i === 2) return cellValue.toLowerCase().includes('penuh') ? 'status-penuh' : 'status-normal';
-      if (i === 4) return cellValue.toLowerCase().includes('trip') ? 'status-trip' : '';
-      return '';
+    function applyStatusClass(i, val) {
+      const lc = val.toLowerCase();
+      if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";
+      if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal";
+      if (i === 4) return lc.includes("trip") ? "status-trip" : "";
+      return "";
     }
 
-    function updateTime(id) {
+    function createTableHTML(dataArr, key) {
+      if (!dataArr.length) return "Data tidak tersedia.";
+      const headers = ["Waktu", "Pompa", "Level", "Suhu", "MCB", "Status"];
+      const cells = dataArr[0].split(",");
+      const rowHTML = cells.map((val, i) => {
+        const last = previousData[key][i];
+        const changed = last !== undefined && last !== val;
+        previousData[key][i] = val;
+        const cls = `${changed ? "glow" : ""} ${applyStatusClass(i, val)}`;
+        return `<td class="${cls}">${val}</td>`;
+      }).join("");
+      return `<table><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr><tr>${rowHTML}</tr></table>`;
+    }
+
+    function updateTimeText(id) {
       const now = new Date();
-      const formatted = now.toLocaleTimeString('id-ID');
+      const formatted = now.toLocaleTimeString("id-ID");
       document.getElementById(id).textContent = `Terakhir update: ${formatted}`;
     }
 
-    function fetchCSV(url, elementId, key) {
-      const loaderId = 'loader-' + key;
-      document.getElementById(loaderId).style.display = 'inline-block';
+    function fetchAndDisplayCSV(url, key) {
+      const tableId = "table-" + key;
+      const loaderId = "loader-" + key;
+      const updateId = "update-" + key;
+
+      document.getElementById(loaderId).style.display = "inline-block";
 
       fetch(url)
         .then(res => res.text())
         .then(data => {
-          const rows = data.trim().split('\n').slice(1, 2);
-          const tableHTML = rows.map(row => {
-            const cells = row.split(',');
-            return `<tr>${cells.map((cell, i) => {
-              const oldVal = previousData[key][i];
-              const changed = oldVal !== undefined && oldVal !== cell;
-              previousData[key][i] = cell;
-              const extraClass = highlightClass(i, cell);
-              return `<td class="${changed ? 'glow' : ''} ${extraClass}">${cell}</td>`;
-            }).join('')}</tr>`;
-          }).join('');
-          document.getElementById(elementId).innerHTML =
-            `<table><tr><th>Waktu</th><th>Pompa</th><th>Level</th><th>Suhu</th><th>MCB</th><th>Status</th></tr>${tableHTML}</table>`;
-
-          updateTime('update-' + key);
-          document.getElementById(loaderId).style.display = 'none';
+          const rows = data.trim().split("\n").slice(1, 2); // Hanya ambil 1 data terbaru
+          document.getElementById(tableId).innerHTML = createTableHTML(rows, key);
+          updateTimeText(updateId);
+          document.getElementById(loaderId).style.display = "none";
         })
         .catch(err => {
-          document.getElementById(elementId).textContent = 'Gagal memuat data.';
-          document.getElementById(loaderId).style.display = 'none';
+          document.getElementById(tableId).innerHTML = "<i style='color:red'>Gagal memuat data.</i>";
+          document.getElementById(loaderId).style.display = "none";
         });
     }
 
-    function loadAll() {
-      fetchCSV(sources.joglo, 'joglo-table', 'joglo');
-      fetchCSV(sources.kantin, 'kantin-table', 'kantin');
-      fetchCSV(sources.lt6, 'lt6-table', 'lt6');
+    function refreshAll() {
+      fetchAndDisplayCSV(sources.joglo, "joglo");
+      fetchAndDisplayCSV(sources.kantin, "kantin");
+      fetchAndDisplayCSV(sources.lt6, "lt6");
     }
 
-    loadAll();
-    setInterval(loadAll, 10000);
+    // Load awal dan per 10 detik
+    refreshAll();
+    setInterval(refreshAll, 10000);
   </script>
 </body>
 </html>
