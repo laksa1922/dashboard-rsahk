@@ -91,8 +91,20 @@
       50% { transform: scale(1.5); opacity: 1; }
       100% { transform: scale(1); opacity: 0.5; }
     }
-    canvas {
+    .chart-box {
+      background: #181818;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 10px;
       margin-top: 10px;
+      box-shadow: 0 0 10px #000;
+    }
+    .chart-box strong {
+      color: #0ff;
+      font-size: 0.9em;
+    }
+    canvas {
+      margin-top: 8px;
       background: #111;
     }
     @media (max-width: 768px) {
@@ -122,21 +134,30 @@
     <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
     <div class="last-update" id="update-joglo">Terakhir update: -</div>
     <div id="joglo-table">Memuat...</div>
-    <canvas id="chart-joglo" height="50"></canvas>
+    <div class="chart-box">
+      <strong>📈 Grafik Level Tandon Joglo</strong>
+      <canvas id="chart-joglo" height="60"></canvas>
+    </div>
   </div>
 
   <div class="data-section">
     <h2>📍 Lokasi: Kantin <span class="loader" id="loader-kantin"></span></h2>
     <div class="last-update" id="update-kantin">Terakhir update: -</div>
     <div id="kantin-table">Memuat...</div>
-    <canvas id="chart-kantin" height="50"></canvas>
+    <div class="chart-box">
+      <strong>📈 Grafik Level Tandon Kantin</strong>
+      <canvas id="chart-kantin" height="60"></canvas>
+    </div>
   </div>
 
   <div class="data-section">
     <h2>📍 Lokasi: Lantai 6 <span class="loader" id="loader-lt6"></span></h2>
     <div class="last-update" id="update-lt6">Terakhir update: -</div>
     <div id="lt6-table">Memuat...</div>
-    <canvas id="chart-lt6" height="50"></canvas>
+    <div class="chart-box">
+      <strong>📈 Grafik Level Tandon Lantai 6</strong>
+      <canvas id="chart-lt6" height="60"></canvas>
+    </div>
   </div>
 
   <script>
