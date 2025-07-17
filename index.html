@@ -91,22 +91,8 @@
       50% { transform: scale(1.5); opacity: 1; }
       100% { transform: scale(1); opacity: 0.5; }
     }
-    .chart-box {
-      background: #181818;
-      border: 1px solid #333;
-      border-radius: 10px;
-      padding: 10px;
-      margin-top: 10px;
-      box-shadow: 0 0 10px #000;
-    }
-    .chart-box strong {
-      color: #0ff;
-      font-size: 0.9em;
-    }
-    canvas {
-      margin-top: 8px;
-      background: #111;
-    }
+
+    /* Responsif */
     @media (max-width: 768px) {
       h1 {
         font-size: 1.5em;
@@ -125,7 +111,6 @@
       }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <h1>Dashboard Pompa & Tandon</h1>
@@ -134,30 +119,18 @@
     <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
     <div class="last-update" id="update-joglo">Terakhir update: -</div>
     <div id="joglo-table">Memuat...</div>
-    <div class="chart-box">
-      <strong>📈 Grafik Level Tandon Joglo</strong>
-      <canvas id="chart-joglo" height="60"></canvas>
-    </div>
   </div>
 
   <div class="data-section">
     <h2>📍 Lokasi: Kantin <span class="loader" id="loader-kantin"></span></h2>
     <div class="last-update" id="update-kantin">Terakhir update: -</div>
     <div id="kantin-table">Memuat...</div>
-    <div class="chart-box">
-      <strong>📈 Grafik Level Tandon Kantin</strong>
-      <canvas id="chart-kantin" height="60"></canvas>
-    </div>
   </div>
 
   <div class="data-section">
     <h2>📍 Lokasi: Lantai 6 <span class="loader" id="loader-lt6"></span></h2>
     <div class="last-update" id="update-lt6">Terakhir update: -</div>
     <div id="lt6-table">Memuat...</div>
-    <div class="chart-box">
-      <strong>📈 Grafik Level Tandon Lantai 6</strong>
-      <canvas id="chart-lt6" height="60"></canvas>
-    </div>
   </div>
 
   <script>
@@ -167,9 +140,11 @@
       lt6: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2q5WkdqPKnd4D37-45O3LSc2KC7nMfRVDWz2crolUEyUOgnhuHxjGgU42BG0q_ddnl8vw_DJ_mcRV/pub?gid=0&single=true&output=csv',
     };
 
-    const previousData = { joglo: [], kantin: [], lt6: [] };
-    const levelData = { joglo: [], kantin: [], lt6: [] };
-    const chartRefs = {};
+    const previousData = {
+      joglo: [],
+      kantin: [],
+      lt6: []
+    };
 
     function highlightClass(i, cellValue) {
       if (i === 1) return cellValue.toLowerCase().includes('nyala') ? 'status-on' : 'status-off';
@@ -184,48 +159,6 @@
       document.getElementById(id).textContent = `Terakhir update: ${formatted}`;
     }
 
-    function updateChart(key, value) {
-      if (!chartRefs[key]) {
-        const ctx = document.getElementById('chart-' + key).getContext('2d');
-        chartRefs[key] = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: [],
-            datasets: [{
-              label: 'Level Tandon',
-              data: [],
-              borderColor: '#0ff',
-              backgroundColor: 'rgba(0,255,255,0.1)',
-              borderWidth: 1,
-              tension: 0.3,
-              pointRadius: 0,
-            }]
-          },
-          options: {
-            animation: false,
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false }},
-            scales: {
-              x: { display: false },
-              y: {
-                display: false,
-                suggestedMin: 0,
-                suggestedMax: 100
-              }
-            }
-          }
-        });
-      }
-
-      levelData[key].push(value);
-      if (levelData[key].length > 20) levelData[key].shift();
-      const chart = chartRefs[key];
-      chart.data.labels = levelData[key].map((_, i) => i);
-      chart.data.datasets[0].data = levelData[key];
-      chart.update();
-    }
-
     function fetchCSV(url, elementId, key) {
       const loaderId = 'loader-' + key;
       document.getElementById(loaderId).style.display = 'inline-block';
@@ -236,9 +169,6 @@
           const rows = data.trim().split('\n').slice(1, 2);
           const tableHTML = rows.map(row => {
             const cells = row.split(',');
-            const levelVal = parseInt(cells[2]);
-            if (!isNaN(levelVal)) updateChart(key, levelVal);
-
             return `<tr>${cells.map((cell, i) => {
               const oldVal = previousData[key][i];
               const changed = oldVal !== undefined && oldVal !== cell;
