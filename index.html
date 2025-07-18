@@ -3,154 +3,89 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Grafik Level Tandon</title>
+  <title>Dashboard Pompa & Tandon</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    * { box-sizing: border-box; }
     body {
+      font-family: 'Segoe UI', sans-serif;
       background: #111;
       color: #eee;
-      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      padding: 20px;
+      padding: 10px;
     }
     h1 {
       text-align: center;
       color: #0ff;
       text-shadow: 0 0 10px #0ff;
+      font-size: 1.8em;
       margin-bottom: 10px;
     }
-    .chart-container {
-      max-width: 1000px;
-      margin: auto;
-      background: #1a1a1a;
-      border-radius: 10px;
-      padding: 20px;
+    nav {
+      text-align: center;
+      margin-bottom: 20px;
     }
-    select {
-      display: block;
-      margin: 0 auto 20px auto;
-      padding: 8px 15px;
+    nav button {
       background: #222;
-      color: #0ff;
       border: 1px solid #0ff;
+      color: #0ff;
+      padding: 10px 20px;
+      margin: 0 5px;
       border-radius: 5px;
+      cursor: pointer;
+    }
+    nav button.active {
+      background: #0ff;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .data-section {
+      background: #1a1a1a;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
+      padding: 15px;
+    }
+
+    h2 {
       font-size: 1em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
     }
-    canvas {
-      width: 100% !important;
-      height: auto !important;
+    .last-update {
+      font-size: 0.85em;
+      color: #aaa;
+      margin-bottom: 10px;
     }
-    @media (max-width: 600px) {
-      body { padding: 10px; }
-      h1 { font-size: 1.2em; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95em;
+      background: #222;
     }
-  </style>
-</head>
-<body>
-  <h1>Grafik Level Tandon Air</h1>
+    th, td {
+      border: 1px solid #444;
+      padding: 8px;
+      text-align: center;
+    }
+    th { background-color: #333; }
+    tr:hover { background: #2a2a2a; }
 
-  <div class="chart-container">
-    <select id="lokasiSelect">
-      <option value="joglo">Joglo</option>
-      <option value="kantin">Kantin</option>
-      <option value="lt6">Lantai 6</option>
-    </select>
-
-    <canvas id="grafikTandon"></canvas>
-  </div>
-
-  <script>
-    const sources = {
-      joglo: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTf9RrlaFN7h2UMkV_KRWJ0hU53Uwp2kCyjwduvxkvhv7rqJc7j71mXBai3hF3aW6R7EGYNzi5TWQSs/pub?gid=0&single=true&output=csv',
-      kantin: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRp3hZufwknJEpOfvD_6YlB_lQEWwcJ-hMgKVfNoV1-jJAKeQB979Acs69cXCKCZVkf01OhwFn8fHlD/pub?gid=0&single=true&output=csv',
-      lt6: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2q5WkdqPKnd4D37-45O3LSc2KC7nMfRVDWz2crolUEyUOgnhuHxjGgU42BG0q_ddnl8vw_DJ_mcRV/pub?gid=0&single=true&output=csv',
-    };
-
-    const chartData = {
-      labels: [],
-      data: [],
-    };
-
-    let chart;
-
-    function initChart() {
-      const ctx = document.getElementById('grafikTandon').getContext('2d');
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: chartData.labels,
-          datasets: [{
-            label: 'Level Tandon',
-            data: chartData.data,
-            borderColor: '#0ff',
-            backgroundColor: 'rgba(0,255,255,0.1)',
-            tension: 0.3,
-            fill: true,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              min: 10,
-              max: 100,
-              ticks: { color: '#fff' }
-            },
-            x: {
-              ticks: { color: '#fff' }
-            }
-          },
-          plugins: {
-            legend: {
-              labels: { color: '#0ff' }
-            }
-          }
-        }
-      });
+    .status-on { color: #0f0; font-weight: bold; }
+    .status-off { color: #f00; font-weight: bold; }
+    .status-normal { color: #0af; }
+    .status-penuh { color: #f0f; }
+    .status-trip {
+      background: #a00;
+      color: #fff;
+      padding: 4px 6px;
+      border-radius: 5px;
     }
 
-    function updateChart() {
-      chart.data.labels = chartData.labels;
-      chart.data.datasets[0].data = chartData.data;
-      chart.update();
-    }
-
-    function fetchLevelData(location) {
-      fetch(sources[location])
-        .then(res => res.text())
-        .then(data => {
-          const rows = data.trim().split('\n').slice(1, 15).reverse(); // ambil 15 data terbaru
-          chartData.labels = [];
-          chartData.data = [];
-
-          rows.forEach(row => {
-            const cols = row.split(',');
-            const time = cols[0].trim().split(' ')[1] || '-';
-            const level = parseInt(cols[2]) || 0;
-
-            chartData.labels.push(time);
-            chartData.data.push(level);
-          });
-
-          updateChart();
-        })
-        .catch(() => {
-          alert('Gagal mengambil data dari Google Sheet');
-        });
-    }
-
-    document.getElementById('lokasiSelect').addEventListener('change', (e) => {
-      fetchLevelData(e.target.value);
-    });
-
-    // Init
-    initChart();
-    fetchLevelData('joglo');
-    setInterval(() => {
-      const selected = document.getElementById('lokasiSelect').value;
-      fetchLevelData(selected);
-    }, 10000);
-  </script>
-</body>
-</html>
+    .gl
