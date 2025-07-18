@@ -2,8 +2,9 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard Pompa & Tandon</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -19,6 +20,27 @@
       font-size: 2em;
       margin-bottom: 20px;
     }
+    nav {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav button {
+      background: #222;
+      border: 1px solid #0ff;
+      color: #0ff;
+      padding: 10px 20px;
+      margin: 0 5px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    nav button.active {
+      background: #0ff;
+      color: #000;
+      font-weight: bold;
+    }
+    .section { display: none; }
+    .section.active { display: block; }
+
     .data-section {
       background: #1a1a1a;
       margin-bottom: 30px;
@@ -49,12 +71,9 @@
       padding: 8px;
       text-align: center;
     }
-    th {
-      background-color: #333;
-    }
+    th { background-color: #333; }
     tr:hover { background: #2a2a2a; }
 
-    /* Status coloring */
     .status-on { color: #0f0; font-weight: bold; }
     .status-off { color: #f00; font-weight: bold; }
     .status-normal { color: #0af; }
@@ -66,17 +85,15 @@
       border-radius: 5px;
     }
 
-    /* Animasi perubahan */
     .glow {
       animation: glowAnim 1.5s ease-in-out;
     }
     @keyframes glowAnim {
-      0%   { background-color: rgba(0, 255, 255, 0.2); }
-      50%  { background-color: rgba(0, 255, 255, 0.6); }
+      0% { background-color: rgba(0,255,255,0.2); }
+      50% { background-color: rgba(0,255,255,0.6); }
       100% { background-color: transparent; }
     }
 
-    /* Loader animasi */
     .loader {
       width: 10px;
       height: 10px;
@@ -91,7 +108,13 @@
       100% { transform: scale(1); opacity: 0.5; }
     }
 
-    /* Mobile friendly */
+    canvas {
+      background: #1a1a1a;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 30px;
+    }
+
     @media (max-width: 768px) {
       h1 { font-size: 1.5em; }
       table, th, td { font-size: 0.8em; }
@@ -100,24 +123,31 @@
 </head>
 <body>
   <h1>Dashboard Pompa & Tandon</h1>
+  <nav>
+    <button onclick="showTab('dashboard')" class="active">Dashboard</button>
+    <button onclick="showTab('grafik')">Grafik Tandon</button>
+  </nav>
 
-  <!-- Seksi Lokasi -->
-  <div class="data-section" id="section-joglo">
-    <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
-    <div class="last-update" id="update-joglo">Terakhir update: -</div>
-    <div id="table-joglo">Memuat data...</div>
+  <div id="dashboard" class="section active">
+    <div class="data-section" id="section-joglo">
+      <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
+      <div class="last-update" id="update-joglo">Terakhir update: -</div>
+      <div id="table-joglo">Memuat data...</div>
+    </div>
+    <div class="data-section" id="section-kantin">
+      <h2>📍 Lokasi: Kantin <span class="loader" id="loader-kantin"></span></h2>
+      <div class="last-update" id="update-kantin">Terakhir update: -</div>
+      <div id="table-kantin">Memuat data...</div>
+    </div>
+    <div class="data-section" id="section-lt6">
+      <h2>📍 Lokasi: Lantai 6 <span class="loader" id="loader-lt6"></span></h2>
+      <div class="last-update" id="update-lt6">Terakhir update: -</div>
+      <div id="table-lt6">Memuat data...</div>
+    </div>
   </div>
 
-  <div class="data-section" id="section-kantin">
-    <h2>📍 Lokasi: Kantin <span class="loader" id="loader-kantin"></span></h2>
-    <div class="last-update" id="update-kantin">Terakhir update: -</div>
-    <div id="table-kantin">Memuat data...</div>
-  </div>
-
-  <div class="data-section" id="section-lt6">
-    <h2>📍 Lokasi: Lantai 6 <span class="loader" id="loader-lt6"></span></h2>
-    <div class="last-update" id="update-lt6">Terakhir update: -</div>
-    <div id="table-lt6">Memuat data...</div>
+  <div id="grafik" class="section">
+    <canvas id="chartTandon" width="100%" height="350"></canvas>
   </div>
 
   <script>
@@ -127,11 +157,15 @@
       lt6: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2q5WkdqPKnd4D37-45O3LSc2KC7nMfRVDWz2crolUEyUOgnhuHxjGgU42BG0q_ddnl8vw_DJ_mcRV/pub?gid=0&single=true&output=csv',
     };
 
-    const previousData = {
-      joglo: [],
-      kantin: [],
-      lt6: []
-    };
+    const previousData = { joglo: [], kantin: [], lt6: [] };
+    const chartData = { labels: [], data: [] };
+
+    function showTab(id) {
+      document.querySelectorAll(".section").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      event.target.classList.add("active");
+    }
 
     function applyStatusClass(i, val) {
       const lc = val.toLowerCase();
@@ -161,34 +195,85 @@
       document.getElementById(id).textContent = `Terakhir update: ${formatted}`;
     }
 
-    function fetchAndDisplayCSV(url, key) {
+    function fetchAndDisplayCSV(url, key, updateChart = false) {
       const tableId = "table-" + key;
       const loaderId = "loader-" + key;
       const updateId = "update-" + key;
-
       document.getElementById(loaderId).style.display = "inline-block";
 
       fetch(url)
         .then(res => res.text())
         .then(data => {
-          const rows = data.trim().split("\n").slice(1, 2); // Hanya ambil 1 data terbaru
+          const rows = data.trim().split("\n").slice(1, 2);
+          const cells = rows[0].split(",");
           document.getElementById(tableId).innerHTML = createTableHTML(rows, key);
           updateTimeText(updateId);
+          if (updateChart && cells[2]) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString("id-ID");
+            const level = parseInt(cells[2]) || 0;
+            if (chartData.labels.length >= 10) {
+              chartData.labels.shift();
+              chartData.data.shift();
+            }
+            chartData.labels.push(timeStr);
+            chartData.data.push(level);
+            updateChartTandon();
+          }
           document.getElementById(loaderId).style.display = "none";
         })
-        .catch(err => {
+        .catch(() => {
           document.getElementById(tableId).innerHTML = "<i style='color:red'>Gagal memuat data.</i>";
           document.getElementById(loaderId).style.display = "none";
         });
     }
 
     function refreshAll() {
-      fetchAndDisplayCSV(sources.joglo, "joglo");
+      fetchAndDisplayCSV(sources.joglo, "joglo", true);
       fetchAndDisplayCSV(sources.kantin, "kantin");
       fetchAndDisplayCSV(sources.lt6, "lt6");
     }
 
-    // Load awal dan per 10 detik
+    let chart;
+    function updateChartTandon() {
+      if (!chart) {
+        const ctx = document.getElementById("chartTandon").getContext("2d");
+        chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: chartData.labels,
+            datasets: [{
+              label: "Level Tandon Joglo",
+              data: chartData.data,
+              borderColor: "#0ff",
+              backgroundColor: "rgba(0,255,255,0.1)",
+              tension: 0.3,
+              fill: true,
+            }]
+          },
+          options: {
+            scales: {
+              y: {
+                min: 10,
+                max: 100,
+                ticks: { color: "#fff" }
+              },
+              x: {
+                ticks: { color: "#fff" }
+              }
+            },
+            plugins: {
+              legend: { labels: { color: "#0ff" } }
+            }
+          }
+        });
+      } else {
+        chart.data.labels = chartData.labels;
+        chart.data.datasets[0].data = chartData.data;
+        chart.update();
+      }
+    }
+
     refreshAll();
     setInterval(refreshAll, 10000);
   </script>
