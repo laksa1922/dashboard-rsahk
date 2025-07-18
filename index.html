@@ -115,14 +115,14 @@
     <div id="table-lt6">Memuat data...</div>
   </div>
 
-  <!-- Audio Notifications -->
-  <audio id="sound-pompa-on" src="https://www.soundjay.com/button/beep-07.wav"></audio>
-  <audio id="sound-pompa-off" src="https://www.soundjay.com/button/beep-08b.wav"></audio>
-  <audio id="sound-tandon-penuh" src="https://www.soundjay.com/button/beep-05.wav"></audio>
-  <audio id="sound-tandon-rendah" src="https://www.soundjay.com/button/beep-10.wav"></audio>
-  <audio id="sound-suhu-tinggi" src="https://www.soundjay.com/button/beep-03.wav"></audio>
-  <audio id="sound-mcb-trip" src="https://www.soundjay.com/button/beep-06.wav"></audio>
-  <audio id="sound-mcb-normal" src="https://www.soundjay.com/button/beep-09.wav"></audio>
+  <!-- Audio Notifikasi Ringan -->
+  <audio id="sound-pompa-on" src="https://assets.mixkit.co/sfx/preview/mixkit-confirmation-tone-2867.mp3"></audio>
+  <audio id="sound-pompa-off" src="https://assets.mixkit.co/sfx/preview/mixkit-click-error-1110.mp3"></audio>
+  <audio id="sound-tandon-penuh" src="https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3"></audio>
+  <audio id="sound-tandon-rendah" src="https://assets.mixkit.co/sfx/preview/mixkit-light-bulb-on-2923.mp3"></audio>
+  <audio id="sound-suhu-tinggi" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3"></audio>
+  <audio id="sound-mcb-trip" src="https://assets.mixkit.co/sfx/preview/mixkit-short-warning-notification-2530.mp3"></audio>
+  <audio id="sound-mcb-normal" src="https://assets.mixkit.co/sfx/preview/mixkit-hard-typewriter-click-1368.mp3"></audio>
 
   <script>
     const sources = {
@@ -141,7 +141,7 @@
       const audio = document.getElementById(id);
       if (audio) {
         audio.currentTime = 0;
-        audio.play().catch(() => {}); // mute autoplay restriction
+        audio.play().catch(() => {});
       }
     }
 
@@ -167,4 +167,68 @@
 
       if (i === 4 && o !== n) {
         if (n.includes("trip")) playSound("sound-mcb-trip");
-        else if (n.includes("normal") ||
+        else if (n.includes("normal") || n.includes("on")) playSound("sound-mcb-normal");
+      }
+    }
+
+    function applyStatusClass(i, val) {
+      const lc = val.toLowerCase();
+      if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";
+      if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal";
+      if (i === 4) return lc.includes("trip") ? "status-trip" : "";
+      return "";
+    }
+
+    function createTableHTML(dataArr, key) {
+      if (!dataArr.length) return "Data tidak tersedia.";
+      const headers = ["Waktu", "Pompa", "Level", "Suhu", "MCB", "Status"];
+      const cells = dataArr[0].split(",");
+      const rowHTML = cells.map((val, i) => {
+        const last = previousData[key][i];
+        const changed = last !== undefined && last !== val;
+        if (changed) handleSoundTriggers(i, last, val);
+        previousData[key][i] = val;
+        const cls = `${changed ? "glow" : ""} ${applyStatusClass(i, val)}`;
+        return `<td class="${cls}">${val}</td>`;
+      }).join("");
+      return `<table><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr><tr>${rowHTML}</tr></table>`;
+    }
+
+    function updateTimeText(id) {
+      const now = new Date();
+      const formatted = now.toLocaleTimeString("id-ID");
+      document.getElementById(id).textContent = `Terakhir update: ${formatted}`;
+    }
+
+    function fetchAndDisplayCSV(url, key) {
+      const tableId = "table-" + key;
+      const loaderId = "loader-" + key;
+      const updateId = "update-" + key;
+
+      document.getElementById(loaderId).style.display = "inline-block";
+
+      fetch(url)
+        .then(res => res.text())
+        .then(data => {
+          const rows = data.trim().split("\n").slice(1, 2);
+          document.getElementById(tableId).innerHTML = createTableHTML(rows, key);
+          updateTimeText(updateId);
+          document.getElementById(loaderId).style.display = "none";
+        })
+        .catch(err => {
+          document.getElementById(tableId).innerHTML = "<i style='color:red'>Gagal memuat data.</i>";
+          document.getElementById(loaderId).style.display = "none";
+        });
+    }
+
+    function refreshAll() {
+      fetchAndDisplayCSV(sources.joglo, "joglo");
+      fetchAndDisplayCSV(sources.kantin, "kantin");
+      fetchAndDisplayCSV(sources.lt6, "lt6");
+    }
+
+    refreshAll();
+    setInterval(refreshAll, 10000);
+  </script>
+</body>
+</html>
