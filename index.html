@@ -54,7 +54,6 @@
     }
     tr:hover { background: #2a2a2a; }
 
-    /* Status coloring */
     .status-on { color: #0f0; font-weight: bold; }
     .status-off { color: #f00; font-weight: bold; }
     .status-normal { color: #0af; }
@@ -66,7 +65,6 @@
       border-radius: 5px;
     }
 
-    /* Animasi perubahan */
     .glow {
       animation: glowAnim 1.5s ease-in-out;
     }
@@ -76,7 +74,6 @@
       100% { background-color: transparent; }
     }
 
-    /* Loader animasi */
     .loader {
       width: 10px;
       height: 10px;
@@ -91,7 +88,6 @@
       100% { transform: scale(1); opacity: 0.5; }
     }
 
-    /* Mobile friendly */
     @media (max-width: 768px) {
       h1 { font-size: 1.5em; }
       table, th, td { font-size: 0.8em; }
@@ -101,7 +97,6 @@
 <body>
   <h1>Dashboard Pompa & Tandon</h1>
 
-  <!-- Seksi Lokasi -->
   <div class="data-section" id="section-joglo">
     <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
     <div class="last-update" id="update-joglo">Terakhir update: -</div>
@@ -120,6 +115,15 @@
     <div id="table-lt6">Memuat data...</div>
   </div>
 
+  <!-- Audio Notifications -->
+  <audio id="sound-pompa-on" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+  <audio id="sound-pompa-off" src="https://www.soundjay.com/button/beep-08b.wav"></audio>
+  <audio id="sound-tandon-penuh" src="https://www.soundjay.com/button/beep-05.wav"></audio>
+  <audio id="sound-tandon-rendah" src="https://www.soundjay.com/button/beep-10.wav"></audio>
+  <audio id="sound-suhu-tinggi" src="https://www.soundjay.com/button/beep-03.wav"></audio>
+  <audio id="sound-mcb-trip" src="https://www.soundjay.com/button/beep-06.wav"></audio>
+  <audio id="sound-mcb-normal" src="https://www.soundjay.com/button/beep-09.wav"></audio>
+
   <script>
     const sources = {
       joglo: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTf9RrlaFN7h2UMkV_KRWJ0hU53Uwp2kCyjwduvxkvhv7rqJc7j71mXBai3hF3aW6R7EGYNzi5TWQSs/pub?gid=0&single=true&output=csv',
@@ -133,64 +137,34 @@
       lt6: []
     };
 
-    function applyStatusClass(i, val) {
-      const lc = val.toLowerCase();
-      if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";
-      if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal";
-      if (i === 4) return lc.includes("trip") ? "status-trip" : "";
-      return "";
+    function playSound(id) {
+      const audio = document.getElementById(id);
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {}); // mute autoplay restriction
+      }
     }
 
-    function createTableHTML(dataArr, key) {
-      if (!dataArr.length) return "Data tidak tersedia.";
-      const headers = ["Waktu", "Pompa", "Level", "Suhu", "MCB", "Status"];
-      const cells = dataArr[0].split(",");
-      const rowHTML = cells.map((val, i) => {
-        const last = previousData[key][i];
-        const changed = last !== undefined && last !== val;
-        previousData[key][i] = val;
-        const cls = `${changed ? "glow" : ""} ${applyStatusClass(i, val)}`;
-        return `<td class="${cls}">${val}</td>`;
-      }).join("");
-      return `<table><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr><tr>${rowHTML}</tr></table>`;
-    }
+    function handleSoundTriggers(i, oldVal, newVal) {
+      const o = (oldVal || "").toLowerCase();
+      const n = (newVal || "").toLowerCase();
 
-    function updateTimeText(id) {
-      const now = new Date();
-      const formatted = now.toLocaleTimeString("id-ID");
-      document.getElementById(id).textContent = `Terakhir update: ${formatted}`;
-    }
+      if (i === 1 && o !== n) {
+        if (n.includes("nyala")) playSound("sound-pompa-on");
+        else if (n.includes("mati") || n.includes("off")) playSound("sound-pompa-off");
+      }
 
-    function fetchAndDisplayCSV(url, key) {
-      const tableId = "table-" + key;
-      const loaderId = "loader-" + key;
-      const updateId = "update-" + key;
+      if (i === 2 && o !== n) {
+        if (n.includes("penuh")) playSound("sound-tandon-penuh");
+        else if (n.includes("rendah")) playSound("sound-tandon-rendah");
+      }
 
-      document.getElementById(loaderId).style.display = "inline-block";
+      if (i === 3 && !isNaN(parseFloat(n))) {
+        const oldTemp = parseFloat(o);
+        const newTemp = parseFloat(n);
+        if (newTemp > 60 && newTemp !== oldTemp) playSound("sound-suhu-tinggi");
+      }
 
-      fetch(url)
-        .then(res => res.text())
-        .then(data => {
-          const rows = data.trim().split("\n").slice(1, 2); // Hanya ambil 1 data terbaru
-          document.getElementById(tableId).innerHTML = createTableHTML(rows, key);
-          updateTimeText(updateId);
-          document.getElementById(loaderId).style.display = "none";
-        })
-        .catch(err => {
-          document.getElementById(tableId).innerHTML = "<i style='color:red'>Gagal memuat data.</i>";
-          document.getElementById(loaderId).style.display = "none";
-        });
-    }
-
-    function refreshAll() {
-      fetchAndDisplayCSV(sources.joglo, "joglo");
-      fetchAndDisplayCSV(sources.kantin, "kantin");
-      fetchAndDisplayCSV(sources.lt6, "lt6");
-    }
-
-    // Load awal dan per 10 detik
-    refreshAll();
-    setInterval(refreshAll, 10000);
-  </script>
-</body>
-</html>
+      if (i === 4 && o !== n) {
+        if (n.includes("trip")) playSound("sound-mcb-trip");
+        else if (n.includes("normal") ||
