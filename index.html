@@ -131,21 +131,31 @@
     function applyStatusClass(i, val, key) {
       const lc = val.toLowerCase();
 
-      // Penyesuaian index kolom berdasarkan lokasi
-      if (key === "lt6") {
+      if (key === "joglo") {
+        if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";    // Status Pompa
+        if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
+      }
+      else if (key === "kantin") {
+        if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";    // Pompa
+        if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
+        if (i === 4) return lc.includes("trip") ? "status-trip" : "";
+      }
+      else if (key === "lt6") {
         if (i === 1) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
-        if (i === 3) return lc.includes("trip") ? "status-trip" : "";               // MCB
-      } else {
-        if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";      // Pompa
-        if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal";// Level
-        if (i === 4) return lc.includes("trip") ? "status-trip" : "";               // MCB
       }
       return "";
     }
 
+    function getHeaders(key) {
+      if (key === "joglo") return ["Waktu", "Status Pompa", "Level Tandon", "Suhu Pompa", "RSSI", "IP Address"];
+      if (key === "kantin") return ["Waktu", "Status Pompa", "Level Tandon", "Suhu Pompa", "MCB", "RSSI", "IP Address"];
+      if (key === "lt6") return ["Waktu", "Level Tandon"];
+      return [];
+    }
+
     function createTableHTML(dataArr, key) {
       if (!dataArr.length) return "Data tidak tersedia.";
-      const headers = ["Waktu", "Pompa", "Level", "Suhu", "MCB", "Status"];
+      const headers = getHeaders(key);
       const cells = dataArr[0].split(",");
       const rowHTML = cells.map((val, i) => {
         const last = previousData[key][i];
@@ -173,7 +183,7 @@
       fetch(url)
         .then(res => res.text())
         .then(data => {
-          const rows = data.trim().split("\n").slice(1, 2);
+          const rows = data.trim().split("\n").slice(1, 2); // Ambil 1 baris terbaru
           document.getElementById(tableId).innerHTML = createTableHTML(rows, key);
           updateTimeText(updateId);
           document.getElementById(loaderId).style.display = "none";
