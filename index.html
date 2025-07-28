@@ -54,7 +54,6 @@
     }
     tr:hover { background: #2a2a2a; }
 
-    /* Status coloring */
     .status-on { color: #0f0; font-weight: bold; }
     .status-off { color: #f00; font-weight: bold; }
     .status-normal { color: #0af; }
@@ -66,7 +65,6 @@
       border-radius: 5px;
     }
 
-    /* Animasi perubahan */
     .glow {
       animation: glowAnim 1.5s ease-in-out;
     }
@@ -76,7 +74,6 @@
       100% { background-color: transparent; }
     }
 
-    /* Loader animasi */
     .loader {
       width: 10px;
       height: 10px;
@@ -91,7 +88,6 @@
       100% { transform: scale(1); opacity: 0.5; }
     }
 
-    /* Mobile friendly */
     @media (max-width: 768px) {
       h1 { font-size: 1.5em; }
       table, th, td { font-size: 0.8em; }
@@ -101,7 +97,6 @@
 <body>
   <h1>Dashboard Pompa & Tandon</h1>
 
-  <!-- Seksi Lokasi -->
   <div class="data-section" id="section-joglo">
     <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
     <div class="last-update" id="update-joglo">Terakhir update: -</div>
@@ -133,11 +128,18 @@
       lt6: []
     };
 
-    function applyStatusClass(i, val) {
+    function applyStatusClass(i, val, key) {
       const lc = val.toLowerCase();
-      if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";
-      if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal";
-      if (i === 4) return lc.includes("trip") ? "status-trip" : "";
+
+      // Penyesuaian index kolom berdasarkan lokasi
+      if (key === "lt6") {
+        if (i === 1) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
+        if (i === 3) return lc.includes("trip") ? "status-trip" : "";               // MCB
+      } else {
+        if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";      // Pompa
+        if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal";// Level
+        if (i === 4) return lc.includes("trip") ? "status-trip" : "";               // MCB
+      }
       return "";
     }
 
@@ -149,7 +151,7 @@
         const last = previousData[key][i];
         const changed = last !== undefined && last !== val;
         previousData[key][i] = val;
-        const cls = `${changed ? "glow" : ""} ${applyStatusClass(i, val)}`;
+        const cls = `${changed ? "glow" : ""} ${applyStatusClass(i, val, key)}`;
         return `<td class="${cls}">${val}</td>`;
       }).join("");
       return `<table><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr><tr>${rowHTML}</tr></table>`;
@@ -171,7 +173,7 @@
       fetch(url)
         .then(res => res.text())
         .then(data => {
-          const rows = data.trim().split("\n").slice(1, 2); // Hanya ambil 1 data terbaru
+          const rows = data.trim().split("\n").slice(1, 2);
           document.getElementById(tableId).innerHTML = createTableHTML(rows, key);
           updateTimeText(updateId);
           document.getElementById(loaderId).style.display = "none";
@@ -188,7 +190,6 @@
       fetchAndDisplayCSV(sources.lt6, "lt6");
     }
 
-    // Load awal dan per 10 detik
     refreshAll();
     setInterval(refreshAll, 10000);
   </script>
