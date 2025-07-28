@@ -49,7 +49,9 @@
       padding: 8px;
       text-align: center;
     }
-    th { background-color: #333; }
+    th {
+      background-color: #333;
+    }
     tr:hover { background: #2a2a2a; }
 
     .status-on { color: #0f0; font-weight: bold; }
@@ -71,19 +73,6 @@
       50%  { background-color: rgba(0, 255, 255, 0.6); }
       100% { background-color: transparent; }
     }
-
-    .arrow-up, .arrow-down {
-      display: inline-block;
-      margin-left: 5px;
-      font-size: 1em;
-      animation: blink 1s infinite;
-    }
-    @keyframes blink {
-      0%, 100% { opacity: 0.2; }
-      50% { opacity: 1; }
-    }
-    .arrow-up { color: #0f0; }   /* hijau naik */
-    .arrow-down { color: #f00; } /* merah turun */
 
     .loader {
       width: 10px;
@@ -141,15 +130,18 @@
 
     function applyStatusClass(i, val, key) {
       const lc = val.toLowerCase();
+
       if (key === "joglo") {
-        if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";
-        if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal";
-      } else if (key === "kantin") {
-        if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";
-        if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal";
+        if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";    // Status Pompa
+        if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
+      }
+      else if (key === "kantin") {
+        if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";    // Pompa
+        if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
         if (i === 4) return lc.includes("trip") ? "status-trip" : "";
-      } else if (key === "lt6") {
-        if (i === 1) return lc.includes("penuh") ? "status-penuh" : "status-normal";
+      }
+      else if (key === "lt6") {
+        if (i === 1) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
       }
       return "";
     }
@@ -167,24 +159,11 @@
       const cells = dataArr[0].split(",");
       const rowHTML = cells.map((val, i) => {
         const last = previousData[key][i];
-        let arrow = "";
-        let cls = "";
-
-        if (last !== undefined && last !== val) {
-          cls += "glow ";
-          if (key === "lt6" && i === 1 && !isNaN(val) && !isNaN(last)) {
-            const prev = parseFloat(last);
-            const curr = parseFloat(val);
-            if (curr > prev) arrow = `<span class="arrow-up">🔼</span>`;
-            else if (curr < prev) arrow = `<span class="arrow-down">🔽</span>`;
-          }
-        }
-
+        const changed = last !== undefined && last !== val;
         previousData[key][i] = val;
-        cls += applyStatusClass(i, val, key);
-        return `<td class="${cls}">${val}${arrow}</td>`;
+        const cls = `${changed ? "glow" : ""} ${applyStatusClass(i, val, key)}`;
+        return `<td class="${cls}">${val}</td>`;
       }).join("");
-
       return `<table><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr><tr>${rowHTML}</tr></table>`;
     }
 
@@ -204,7 +183,7 @@
       fetch(url)
         .then(res => res.text())
         .then(data => {
-          const rows = data.trim().split("\n").slice(1, 2);
+          const rows = data.trim().split("\n").slice(1, 2); // Ambil 1 baris terbaru
           document.getElementById(tableId).innerHTML = createTableHTML(rows, key);
           updateTimeText(updateId);
           document.getElementById(loaderId).style.display = "none";
