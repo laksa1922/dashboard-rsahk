@@ -1,108 +1,207 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Monitoring - Pompa & Tandon</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Pompa & Tandon</title>
   <style>
+    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background: linear-gradient(135deg, #0a192f, #172a45);
-      color: #e6f1ff;
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #eee;
+      margin: 10px;
+    }
+    h1 {
+      text-align: center;
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff;
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+    .data-section {
+      background: #1a1a1a;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
+      padding: 15px;
+    }
+    h2 {
+      font-size: 1.1em;
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+      margin-bottom: 5px;
     }
-    header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-    header h1 {
-      font-size: 2.2em;
-      margin: 0;
-      color: #64ffda;
-      text-shadow: 0 0 10px rgba(100,255,218,0.3);
-    }
-    header p {
-      font-size: 1em;
-      color: #a8b2d1;
-    }
-    .menu {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      width: 90%;
-      max-width: 800px;
-    }
-    .card {
-      background: rgba(17,34,64,0.9);
-      border: 1px solid rgba(100,255,218,0.2);
-      border-radius: 16px;
-      text-align: center;
-      padding: 30px 20px;
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 4px 20px rgba(100,255,218,0.2);
-      border-color: #64ffda;
-    }
-    .card h2 {
+    .last-update {
+      font-size: 0.85em;
+      color: #aaa;
       margin-bottom: 10px;
-      color: #64ffda;
     }
-    .card p {
-      color: #ccd6f6;
+    table {
+      width: 100%;
+      border-collapse: collapse;
       font-size: 0.95em;
+      background: #222;
     }
-    footer {
-      margin-top: 50px;
-      font-size: 0.9em;
-      color: #8892b0;
+    th, td {
+      border: 1px solid #444;
+      padding: 8px;
+      text-align: center;
     }
-    a {
-      color: inherit;
-      text-decoration: none;
+    th {
+      background-color: #333;
+    }
+    tr:hover { background: #2a2a2a; }
+
+    .status-on { color: #0f0; font-weight: bold; }
+    .status-off { color: #f00; font-weight: bold; }
+    .status-normal { color: #0af; }
+    .status-penuh { color: #f0f; }
+    .status-trip {
+      background: #a00;
+      color: #fff;
+      padding: 4px 6px;
+      border-radius: 5px;
+    }
+
+    .glow {
+      animation: glowAnim 1.5s ease-in-out;
+    }
+    @keyframes glowAnim {
+      0%   { background-color: rgba(0, 255, 255, 0.2); }
+      50%  { background-color: rgba(0, 255, 255, 0.6); }
+      100% { background-color: transparent; }
+    }
+
+    .loader {
+      width: 10px;
+      height: 10px;
+      background: #0ff;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+      margin-left: 10px;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.5); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.5; }
+    }
+
+    @media (max-width: 768px) {
+      h1 { font-size: 1.5em; }
+      table, th, td { font-size: 0.8em; }
     }
   </style>
 </head>
 <body>
+  <h1>Dashboard Pompa & Tandon</h1>
 
-  <header>
-    <h1>Dashboard Monitoring</h1>
-    <p>Efisiensi Pemeliharaan & Deteksi Dini Kerusakan</p>
-  </header>
-
-  <div class="menu">
-    <a href="https://laksa1922.github.io/ips/" target="_blank">
-      <div class="card">
-        <h2>Pompa & Tandon</h2>
-        <p>Lihat kondisi realtime sistem pompa dan tandon air.</p>
-      </div>
-    </a>
-
-    <a href="#">
-      <div class="card">
-        <h2>Ruang Gas Medis</h2>
-        <p>Monitoring tekanan & kapasitas tabung (Coming Soon).</p>
-      </div>
-    </a>
-
-    <a href="#">
-      <div class="card">
-        <h2>Data Historis</h2>
-        <p>Laporan log suhu, status pompa, dan penggunaan harian (Coming Soon).</p>
-      </div>
-    </a>
+  <div class="data-section" id="section-joglo">
+    <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
+    <div class="last-update" id="update-joglo">Terakhir update: -</div>
+    <div id="table-joglo">Memuat data...</div>
   </div>
 
-  <footer>
-    © 2025 Unit Pemeliharaan | ESP8266 IoT System by Moch Laksa
-  </footer>
+  <div class="data-section" id="section-kantin">
+    <h2>📍 Lokasi: Kantin <span class="loader" id="loader-kantin"></span></h2>
+    <div class="last-update" id="update-kantin">Terakhir update: -</div>
+    <div id="table-kantin">Memuat data...</div>
+  </div>
 
+  <div class="data-section" id="section-lt6">
+    <h2>📍 Lokasi: Lantai 6 <span class="loader" id="loader-lt6"></span></h2>
+    <div class="last-update" id="update-lt6">Terakhir update: -</div>
+    <div id="table-lt6">Memuat data...</div>
+  </div>
+
+  <script>
+    const sources = {
+      joglo: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTf9RrlaFN7h2UMkV_KRWJ0hU53Uwp2kCyjwduvxkvhv7rqJc7j71mXBai3hF3aW6R7EGYNzi5TWQSs/pub?gid=0&single=true&output=csv',
+      kantin: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRp3hZufwknJEpOfvD_6YlB_lQEWwcJ-hMgKVfNoV1-jJAKeQB979Acs69cXCKCZVkf01OhwFn8fHlD/pub?gid=0&single=true&output=csv',
+      lt6: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2q5WkdqPKnd4D37-45O3LSc2KC7nMfRVDWz2crolUEyUOgnhuHxjGgU42BG0q_ddnl8vw_DJ_mcRV/pub?gid=0&single=true&output=csv',
+    };
+
+    const previousData = {
+      joglo: [],
+      kantin: [],
+      lt6: []
+    };
+
+    function applyStatusClass(i, val, key) {
+      const lc = val.toLowerCase();
+
+      if (key === "joglo") {
+        if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";    // Status Pompa
+        if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
+      }
+      else if (key === "kantin") {
+        if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";    // Pompa
+        if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
+        if (i === 4) return lc.includes("trip") ? "status-trip" : "";
+      }
+      else if (key === "lt6") {
+        if (i === 1) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
+      }
+      return "";
+    }
+
+    function getHeaders(key) {
+      if (key === "joglo") return ["Waktu", "Status Pompa", "Level Tandon", "Suhu Pompa", "RSSI", "IP Address"];
+      if (key === "kantin") return ["Waktu", "Status Pompa", "Level Tandon", "Suhu Pompa", "MCB", "RSSI", "IP Address"];
+      if (key === "lt6") return ["Waktu", "Level Tandon"];
+      return [];
+    }
+
+    function createTableHTML(dataArr, key) {
+      if (!dataArr.length) return "Data tidak tersedia.";
+      const headers = getHeaders(key);
+      const cells = dataArr[0].split(",");
+      const rowHTML = cells.map((val, i) => {
+        const last = previousData[key][i];
+        const changed = last !== undefined && last !== val;
+        previousData[key][i] = val;
+        const cls = `${changed ? "glow" : ""} ${applyStatusClass(i, val, key)}`;
+        return `<td class="${cls}">${val}</td>`;
+      }).join("");
+      return `<table><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr><tr>${rowHTML}</tr></table>`;
+    }
+
+    function updateTimeText(id) {
+      const now = new Date();
+      const formatted = now.toLocaleTimeString("id-ID");
+      document.getElementById(id).textContent = `Terakhir update: ${formatted}`;
+    }
+
+    function fetchAndDisplayCSV(url, key) {
+      const tableId = "table-" + key;
+      const loaderId = "loader-" + key;
+      const updateId = "update-" + key;
+
+      document.getElementById(loaderId).style.display = "inline-block";
+
+      fetch(url)
+        .then(res => res.text())
+        .then(data => {
+          const rows = data.trim().split("\n").slice(1, 2); // Ambil 1 baris terbaru
+          document.getElementById(tableId).innerHTML = createTableHTML(rows, key);
+          updateTimeText(updateId);
+          document.getElementById(loaderId).style.display = "none";
+        })
+        .catch(err => {
+          document.getElementById(tableId).innerHTML = "<i style='color:red'>Gagal memuat data.</i>";
+          document.getElementById(loaderId).style.display = "none";
+        });
+    }
+
+    function refreshAll() {
+      fetchAndDisplayCSV(sources.joglo, "joglo");
+      fetchAndDisplayCSV(sources.kantin, "kantin");
+      fetchAndDisplayCSV(sources.lt6, "lt6");
+    }
+
+    refreshAll();
+    setInterval(refreshAll, 10000);
+  </script>
 </body>
 </html>
