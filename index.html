@@ -1,165 +1,208 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Monitoring Pompa & Tandon</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Pompa & Tandon</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #eee;
+      margin: 10px;
+    }
+    h1 {
+      text-align: center;
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff;
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+    .data-section {
+      background: #1a1a1a;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
+      padding: 15px;
+    }
+    h2 {
+      font-size: 1.1em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .last-update {
+      font-size: 0.85em;
+      color: #aaa;
+      margin-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95em;
+      background: #222;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #333;
+    }
+    tr:hover { background: #2a2a2a; }
 
-<style>
-:root{
- --bg:#f5f7fa;--text:#333;--card:#fff;--border:#eaeaea;
- --head:#f0f2f5;--accent:#3498db;
-}
-body.dark{
- --bg:#111;--text:#eee;--card:#1e1e1e;
- --border:#333;--head:#2a2a2a;
-}
-body{
- margin:0;padding:20px;font-family:Segoe UI,sans-serif;
- background:var(--bg);color:var(--text);transition:.3s;
-}
-.header{text-align:center;border-bottom:2px solid var(--accent);padding:15px}
-.header h1{margin:0}
-.header p{margin:4px;color:var(--accent);font-style:italic}
+    .status-on { color: #0f0; font-weight: bold; }
+    .status-off { color: #f00; font-weight: bold; }
+    .status-normal { color: #0af; }
+    .status-penuh { color: #f0f; }
+    .status-trip {
+      background: #a00;
+      color: #fff;
+      padding: 4px 6px;
+      border-radius: 5px;
+    }
 
-.toggle{
- position:fixed;top:15px;right:15px;
- width:38px;height:38px;border-radius:50%;
- border:none;background:var(--accent);
- color:#fff;font-size:18px;cursor:pointer;
-}
+    .glow {
+      animation: glowAnim 1.5s ease-in-out;
+    }
+    @keyframes glowAnim {
+      0%   { background-color: rgba(0, 255, 255, 0.2); }
+      50%  { background-color: rgba(0, 255, 255, 0.6); }
+      100% { background-color: transparent; }
+    }
 
-.card{
- background:var(--card);border-radius:12px;
- padding:15px;margin:20px 0;
- box-shadow:0 4px 10px rgba(0,0,0,.1);
-}
-.card-header{
- display:flex;justify-content:space-between;
- font-weight:700;margin-bottom:6px
-}
-.last{font-size:.85em;color:gray;margin-bottom:8px}
+    .loader {
+      width: 10px;
+      height: 10px;
+      background: #0ff;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+      margin-left: 10px;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.5); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.5; }
+    }
 
-table{width:100%;border-collapse:collapse;font-size:.9em}
-th,td{
- padding:8px;border-bottom:1px solid var(--border);
- text-align:center
-}
-th{background:var(--head)}
-.badge{
- padding:4px 10px;border-radius:6px;
- font-weight:700;color:#fff
-}
-.on{background:#27ae60}
-.off,.rendah{background:#e74c3c}
-.normal,.mcb-normal{background:#2980b9}
-.penuh,.trip{background:#f1c40f;color:#000}
-
-.loader{
- width:10px;height:10px;border-radius:50%;
- background:var(--accent);animation:pulse 1s infinite
-}
-@keyframes pulse{50%{transform:scale(1.6);opacity:.5}}
-
-.footer{text-align:center;margin-top:30px;font-size:.85em}
-</style>
+    @media (max-width: 768px) {
+      h1 { font-size: 1.5em; }
+      table, th, td { font-size: 0.8em; }
+    }
+  </style>
 </head>
-
 <body>
+  <h1>Dashboard Pompa & Tandon</h1>
 
-<button class="toggle" onclick="toggleDark()">🌙</button>
+  <div class="data-section" id="section-joglo">
+    <h2>📍 Lokasi: Joglo <span class="loader" id="loader-joglo"></span></h2>
+    <div class="last-update" id="update-joglo">Terakhir update: -</div>
+    <div id="table-joglo">Memuat data...</div>
+  </div>
 
-<div class="header">
-<h1>⚙️ Monitoring Pompa & Tandon</h1>
-<p>Sistem Pemantauan Cerdas Real-time</p>
-</div>
+  <div class="data-section" id="section-kantin">
+    <h2>📍 Lokasi: Kantin <span class="loader" id="loader-kantin"></span></h2>
+    <div class="last-update" id="update-kantin">Terakhir update: -</div>
+    <div id="table-kantin">Memuat data...</div>
+  </div>
 
-<div id="joglo" class="card"></div>
-<div id="kantin" class="card"></div>
-<div id="lt6" class="card"></div>
+  <div class="data-section" id="section-lt6">
+    <h2>📍 Lokasi: Lantai 6 <span class="loader" id="loader-lt6"></span></h2>
+    <div class="last-update" id="update-lt6">Terakhir update: -</div>
+    <div id="table-lt6">Memuat data...</div>
+  </div>
 
-<div class="footer">
-⚡ <b>Instalasi Pemelihara Sarana (IPS)</b><br>
-RS Adi Husada Kapasari
-</div>
+  <script>
+    const sources = {
+      joglo: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTf9RrlaFN7h2UMkV_KRWJ0hU53Uwp2kCyjwduvxkvhv7rqJc7j71mXBai3hF3aW6R7EGYNzi5TWQSs/pub?gid=0&single=true&output=csv',
+      kantin: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRp3hZufwknJEpOfvD_6YlB_lQEWwcJ-hMgKVfNoV1-jJAKeQB979Acs69cXCKCZVkf01OhwFn8fHlD/pub?gid=0&single=true&output=csv',
+      lt6: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2q5WkdqPKnd4D37-45O3LSc2KC7nMfRVDWz2crolUEyUOgnhuHxjGgU42BG0q_ddnl8vw_DJ_mcRV/pub?gid=0&single=true&output=csv',
+    };
 
-<script>
-const SRC={
- joglo:{
-  title:"📍 Joglo",
-  url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTf9RrlaFN7h2UMkV_KRWJ0hU53Uwp2kCyjwduvxkvhv7rqJc7j71mXBai3hF3aW6R7EGYNzi5TWQSs/pub?gid=0&single=true&output=csv",
-  head:["Waktu","Pompa","Level","Suhu","RSSI","IP"],
-  map:(v,i)=>{
-   v=v.toLowerCase();
-   if(i==1) return v.includes("nyala")?"on":"off";
-   if(i==2) return v.includes("rendah")?"rendah":v.includes("penuh")?"penuh":"normal";
-  }
- },
- kantin:{
-  title:"📍 Kantin",
-  url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vRp3hZufwknJEpOfvD_6YlB_lQEWwcJ-hMgKVfNoV1-jJAKeQB979Acs69cXCKCZVkf01OhwFn8fHlD/pub?gid=0&single=true&output=csv",
-  head:["Waktu","Pompa","Level","Suhu","MCB","RSSI","IP"],
-  map:(v,i)=>{
-   v=v.toLowerCase();
-   if(i==1) return v.includes("nyala")?"on":"off";
-   if(i==2) return v.includes("rendah")?"rendah":v.includes("penuh")?"penuh":"normal";
-   if(i==4) return v.includes("trip")?"trip":"mcb-normal";
-  }
- },
- lt6:{
-  title:"📍 Lantai 6",
-  url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vS2q5WkdqPKnd4D37-45O3LSc2KC7nMfRVDWz2crolUEyUOgnhuHxjGgU42BG0q_ddnl8vw_DJ_mcRV/pub?gid=0&single=true&output=csv",
-  head:["Waktu","Level"],
-  map:v=>v.toLowerCase().includes("rendah")?"rendah":v.includes("penuh")?"penuh":"normal"
- }
-};
+    const previousData = {
+      joglo: [],
+      kantin: [],
+      lt6: []
+    };
 
-function cardHTML(id){
- return `
- <div class="card-header">${SRC[id].title}<div class="loader" id="l-${id}"></div></div>
- <div class="last" id="t-${id}">Terakhir update: -</div>
- <div id="tb-${id}">Memuat...</div>`;
-}
+    function applyStatusClass(i, val, key) {
+      const lc = val.toLowerCase();
 
-Object.keys(SRC).forEach(k=>{
- document.getElementById(k).innerHTML=cardHTML(k);
-});
+      if (key === "joglo") {
+        if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";    // Status Pompa
+        if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
+      }
+      else if (key === "kantin") {
+        if (i === 1) return lc.includes("nyala") ? "status-on" : "status-off";    // Pompa
+        if (i === 2) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
+        if (i === 4) return lc.includes("trip") ? "status-trip" : "";
+      }
+      else if (key === "lt6") {
+        if (i === 1) return lc.includes("penuh") ? "status-penuh" : "status-normal"; // Level
+      }
+      return "";
+    }
 
-function table(key,row){
- const c=SRC[key];
- let h=`<table><tr>${c.head.map(x=>`<th>${x}</th>`).join("")}</tr><tr>`;
- row.slice(0,c.head.length).forEach((v,i)=>{
-  const cls=c.map(v,i)||"";
-  h+=`<td>${cls?`<span class="badge ${cls}">${v}</span>`:v}</td>`;
- });
- return h+"</tr></table>";
-}
+    function getHeaders(key) {
+      if (key === "joglo") return ["Waktu", "Status Pompa", "Level Tandon", "Suhu Pompa", "RSSI", "IP Address"];
+      if (key === "kantin") return ["Waktu", "Status Pompa", "Level Tandon", "Suhu Pompa", "MCB", "RSSI", "IP Address"];
+      if (key === "lt6") return ["Waktu", "Level Tandon"];
+      return [];
+    }
 
-function load(key){
- document.getElementById("l-"+key).style.display="inline-block";
- fetch(SRC[key].url).then(r=>r.text()).then(t=>{
-  const r=t.trim().split("\n")[1].split(",");
-  document.getElementById("tb-"+key).innerHTML=table(key,r);
-  document.getElementById("t-"+key).textContent=
-   "Terakhir update: "+new Date().toLocaleTimeString("id-ID");
- }).catch(()=>{
-  document.getElementById("tb-"+key).innerHTML="<b style=color:red>Gagal memuat</b>";
- }).finally(()=>{
-  document.getElementById("l-"+key).style.display="none";
- });
-}
+    function createTableHTML(dataArr, key) {
+      if (!dataArr.length) return "Data tidak tersedia.";
+      const headers = getHeaders(key);
+      const cells = dataArr[0].split(",");
+      const rowHTML = cells.map((val, i) => {
+        const last = previousData[key][i];
+        const changed = last !== undefined && last !== val;
+        previousData[key][i] = val;
+        const cls = `${changed ? "glow" : ""} ${applyStatusClass(i, val, key)}`;
+        return `<td class="${cls}">${val}</td>`;
+      }).join("");
+      return `<table><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr><tr>${rowHTML}</tr></table>`;
+    }
 
-function refresh(){Object.keys(SRC).forEach(load)}
+    function updateTimeText(id) {
+      const now = new Date();
+      const formatted = now.toLocaleTimeString("id-ID");
+      document.getElementById(id).textContent = `Terakhir update: ${formatted}`;
+    }
 
-function toggleDark(){
- document.body.classList.toggle("dark");
- localStorage.theme=document.body.classList.contains("dark")?"dark":"light";
-}
+    function fetchAndDisplayCSV(url, key) {
+      const tableId = "table-" + key;
+      const loaderId = "loader-" + key;
+      const updateId = "update-" + key;
 
-if(localStorage.theme==="dark")document.body.classList.add("dark");
+      document.getElementById(loaderId).style.display = "inline-block";
 
-refresh();
-setInterval(refresh,10000);
-</script>
+      fetch(url)
+        .then(res => res.text())
+        .then(data => {
+          const rows = data.trim().split("\n").slice(1, 2); // Ambil 1 baris terbaru
+          document.getElementById(tableId).innerHTML = createTableHTML(rows, key);
+          updateTimeText(updateId);
+          document.getElementById(loaderId).style.display = "none";
+        })
+        .catch(err => {
+          document.getElementById(tableId).innerHTML = "<i style='color:red'>Gagal memuat data.</i>";
+          document.getElementById(loaderId).style.display = "none";
+        });
+    }
+
+    function refreshAll() {
+      fetchAndDisplayCSV(sources.joglo, "joglo");
+      fetchAndDisplayCSV(sources.kantin, "kantin");
+      fetchAndDisplayCSV(sources.lt6, "lt6");
+    }
+
+    refreshAll();
+    setInterval(refreshAll, 10000);
+  </script>
 </body>
 </html>
+
